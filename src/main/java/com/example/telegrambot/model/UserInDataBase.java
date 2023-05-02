@@ -1,14 +1,12 @@
 package com.example.telegrambot.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.DynamicUpdate;
 
 import java.time.LocalDateTime;
 
@@ -43,7 +41,7 @@ public class UserInDataBase {
     private boolean userStatus;
 
     @Column(name = "position")
-    private String position;
+    private String position = "main";
 
     public Long getChatId() {
         return chatId;
@@ -106,6 +104,13 @@ public class UserInDataBase {
     }
 
     public void setPosition(String position) {
+
         this.position = position;
+    }
+    @PrePersist
+    public void prePersist() {
+        if (position == null) {
+            position = "main";
+        }
     }
 }

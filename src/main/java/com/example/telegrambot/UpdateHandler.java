@@ -8,6 +8,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 public class UpdateHandler {
 
@@ -39,19 +40,31 @@ public class UpdateHandler {
         return update.hasCallbackQuery() && update.getCallbackQuery().getData() != null && !update.getCallbackQuery().getData().isEmpty();
     }
 
-    private void updateUserInfo (User user){
-        UserInDataBase userInDataBase = UserInDataBase.builder()
-                .chatId(user.getId())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .username(user.getUserName())
-                .lastContact(LocalDateTime.now())
-                .userStatus(true)
-                .position("main")
-                .build();
+    private void updateUserInfo(User user){
+        UserInDataBase userInDataBase = userRepository.findById(user.getId())
+                .map(existingUserInDataBase -> {
+                    existingUserInDataBase.setChatId(user.getId());
+                    existingUserInDataBase.setFirstName(user.getFirstName());
+                    existingUserInDataBase.setLastName(user.getLastName());
+                    existingUserInDataBase.setUsername(user.getUserName());
+                    existingUserInDataBase.setLastContact(LocalDateTime.now());
+                    existingUserInDataBase.setUserStatus(true);
+                    return existingUserInDataBase;
+                })
+                .orElseGet(() -> {
+                    return UserInDataBase.builder()
+                            .chatId(user.getId())
+                            .firstName(user.getFirstName())
+                            .lastName(user.getLastName())
+                            .username(user.getUserName())
+                            .lastContact(LocalDateTime.now())
+                            .userStatus(true)
+                            .build();
+                });
 
         userRepository.save(userInDataBase);
     }
+
 
 
 }

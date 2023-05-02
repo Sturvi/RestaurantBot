@@ -14,13 +14,14 @@ import java.util.concurrent.Executors;
 @Component
 public class TelegramBot extends TelegramLongPollingBot  {
 
-    @Autowired
+    final
     UserRepository userRepository;
     private final ExecutorService executorService;
 
-    public TelegramBot() {
+    public TelegramBot(UserRepository userRepository) {
         super("6272045013:AAGyZKGFDX_5E5jQALnj1FudvH2-yFxtQEs");
         this.executorService = Executors.newFixedThreadPool(10);
+        this.userRepository = userRepository;
     }
 
     @Override

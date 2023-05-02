@@ -13,8 +13,11 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 @SpringBootApplication
 public class TelegramBotApplication {
 
-    @Autowired
-    private TelegramBot telegramBot;
+    private final TelegramBot telegramBot;
+
+    public TelegramBotApplication(TelegramBot telegramBot) {
+        this.telegramBot = telegramBot;
+    }
 
     public static void main(String[] args) {
         SpringApplication.run(TelegramBotApplication.class, args);
