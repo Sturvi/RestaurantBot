@@ -1,0 +1,8 @@
+version: "3.9"
+services:
+  app:
+    image: your_app_image
+    environment:
+      DB_URL: "jdbc:postgresql://10.8.0.1:5432/restoran_bot?user=postgres&password=56485648"
+    ports:
+      - "8080:8080"
