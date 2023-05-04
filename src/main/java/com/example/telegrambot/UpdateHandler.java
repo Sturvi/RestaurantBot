@@ -2,11 +2,12 @@ package com.example.telegrambot;
 
 import com.example.telegrambot.model.Review;
 import com.example.telegrambot.model.UserInDataBase;
-import com.example.telegrambot.repository.UserRepository;
+import com.example.telegrambot.repository.AllRepository;
+
+import com.example.telegrambot.service.MessageSender;
+import com.example.telegrambot.service.UserStateService;
 import org.apache.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.objects.Message;
+
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 
@@ -14,24 +15,35 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+
+/**
+ * Обработчик обновлений.
+ */
 public class UpdateHandler {
 
-    UserRepository userRepository;
-    private TelegramObject telegramObject;
+    AllRepository allRepository;
+    private final TelegramObject telegramObject;
     private static final Logger LOGGER = Logger.getLogger(UpdateHandler.class);
 
-    private UpdateHandler(UserRepository userRepository, TelegramObject telegramObject) {
-        this.userRepository = userRepository;
+    private UpdateHandler(AllRepository allRepository, TelegramObject telegramObject) {
+        this.allRepository = allRepository;
         this.telegramObject = telegramObject;
     }
 
-    public UpdateHandler getUpdateHandler(Update update, UserRepository userRepository) {
+    /**
+     * Создает экземпляр UpdateHandler, соответствующий типу обновления.
+     *
+     * @param update        Объект Update, содержащий информацию об обновлении.
+     * @param allRepository Репозиторий для доступа к базе данных.
+     * @return Экземпляр UpdateHandler, соответствующий типу обновления.
+     */
+    public static UpdateHandler getUpdateHandler(Update update, AllRepository allRepository) {
         if (isMessageWithText(update)) {
             TelegramObject newTelegramObject = new TelegramObject(update.getMessage());
-            return new UpdateHandler(userRepository, newTelegramObject);
+            return new UpdateHandler(allRepository, newTelegramObject);
         } else if (isCallbackWithData(update)) {
             TelegramObject newTelegramObject = new TelegramObject(update.getCallbackQuery());
-            return new UpdateHandler(userRepository, newTelegramObject);
+            return new UpdateHandler(allRepository, newTelegramObject);
         } else return null;
     }
 
@@ -47,24 +59,46 @@ public class UpdateHandler {
             handlingTextMessage();
         } else if (telegramObject.isCallbackQuery()) {
             LOGGER.info(String.format("Handling update for callback with data: %s, chat ID: %d", telegramObject.getData(), telegramObject.getId()));
-            UserInDataBase userInDataBase = updateUserInfo(telegramObject.getFrom());
+            updateUserInfo(telegramObject.getFrom());
         }
     }
 
     private void handlingTextMessage() {
         switch (telegramObject.getText()) {
-            case ("Оставить отзыв") -> {
+            case ("/start") -> {
+                changeUserState("main");
+                new MessageSender(telegramObject, allRepository).sendMessage("Добро пожаловать в наш бот");
+            }
+            case ("\uD83D\uDCDD Оставить отзыв") -> {
                 changeUserState("review");
-                //Отправить пользователю сообщение
+                new MessageSender(telegramObject, allRepository).sendMessage("Пришлите ваш отзыв в виде сообщения");
             }
             default -> {
-                //если State == review то вызвать addReview()
+                String userStatus = allRepository.getUserStateRepository().findById(telegramObject.getId()).get().getUserState();
+
+                switch (userStatus) {
+                    case ("review") -> addReview();
+                }
             }
         }
     }
 
     private Review addReview() {
-        return null;
+        Optional<UserInDataBase> userInDataBase = allRepository.getUserRepository().findById(telegramObject.getId());
+
+        Review review = Review.builder()
+                .user(userInDataBase.get())
+                .message(telegramObject.getText())
+                .build();
+
+        allRepository.getReviewRepository().save(review);
+
+        MessageSender messageSender = new MessageSender(telegramObject, allRepository);
+        messageSender.sendMessage("Спасибо за ваш отзыв");
+
+        //Реализовать класс отправки сообщений для администрации.
+
+        return review;
     }
 
     /**
@@ -72,7 +106,7 @@ public class UpdateHandler {
      *
      * @return true, если обновление содержит сообщение с текстом, иначе false.
      */
-    private boolean isMessageWithText(Update update) {
+    private static boolean isMessageWithText(Update update) {
         return !update.hasCallbackQuery() && update.hasMessage() && update.getMessage().hasText();
     }
 
@@ -81,7 +115,7 @@ public class UpdateHandler {
      *
      * @return true, если обновление содержит обратный вызов с данными, иначе false.
      */
-    private boolean isCallbackWithData(Update update) {
+    private static boolean isCallbackWithData(Update update) {
         return update.hasCallbackQuery() && update.getCallbackQuery().getData() != null && !update.getCallbackQuery().getData().isEmpty();
     }
 
@@ -97,7 +131,7 @@ public class UpdateHandler {
     private UserInDataBase updateUserInfo(User user) {
         LOGGER.info(String.format("Updating user info for user with ID: %d", user.getId()));
 
-        return userRepository.findById(user.getId()).map(existingUser -> {
+        return allRepository.getUserRepository().findById(user.getId()).map(existingUser -> {
             Duration duration = Duration.between(existingUser.getUpdatedAt(), LocalDateTime.now());
             if (duration.toDays() >= 1) {
                 LOGGER.info(String.format("User with ID: %d was last updated more than a day ago, updating...", user.getId()));
@@ -129,12 +163,12 @@ public class UpdateHandler {
                 .userStatus(true)
                 .build();
 
-        userRepository.save(userInDataBase);
+        allRepository.getUserRepository().save(userInDataBase);
 
         return userInDataBase;
     }
 
     private void changeUserState(String userState) {
-
+        new UserStateService(allRepository.getUserStateRepository()).updateUserStatus(telegramObject.getId(), userState);
     }
 }

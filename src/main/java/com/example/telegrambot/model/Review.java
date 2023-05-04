@@ -1,6 +1,7 @@
 package com.example.telegrambot.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,10 +24,12 @@ public class Review {
     private Integer reviewId;
 
     @ManyToOne
+    @NotNull
     @JoinColumn(name = "chat_id", referencedColumnName = "id")
     private UserInDataBase user;
 
     @Column(name = "message", nullable = false)
+    @NotNull
     private String message;
 
     @Column(name = "review_date", nullable = false, updatable = false)
