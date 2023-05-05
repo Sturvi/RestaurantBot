@@ -15,6 +15,9 @@ public class AllRepository {
     @Autowired
     ReviewRepository reviewRepository;
 
+    @Autowired
+    UserRolesRepository userRolesRepository;
+
     public UserRepository getUserRepository() {
         return userRepository;
     }
@@ -25,5 +28,9 @@ public class AllRepository {
 
     public ReviewRepository getReviewRepository() {
         return reviewRepository;
+    }
+
+    public UserRolesRepository getUserRolesRepository() {
+        return userRolesRepository;
     }
 }

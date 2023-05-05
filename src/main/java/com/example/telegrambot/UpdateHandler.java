@@ -2,10 +2,11 @@ package com.example.telegrambot;
 
 import com.example.telegrambot.model.Review;
 import com.example.telegrambot.model.UserInDataBase;
+import com.example.telegrambot.model.UserState;
 import com.example.telegrambot.repository.AllRepository;
 
-import com.example.telegrambot.service.MessageSender;
-import com.example.telegrambot.service.UserStateService;
+import com.example.telegrambot.service.AdminMessageSender;
+import com.example.telegrambot.service.UserMessageSender;
 import org.apache.log4j.Logger;
 
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -53,36 +54,57 @@ public class UpdateHandler {
      * Если обновление является обратным вызовом с данными, вызывает метод updateUserInfo() для обновления информации о пользователе.
      */
     public void handling() {
-        if (telegramObject.isMessage()) {
-            LOGGER.info(String.format("Handling update for message with text: %s, chat ID: %d", telegramObject.getText(), telegramObject.getId()));
-            updateUserInfo(telegramObject.getFrom());
-            handlingTextMessage();
-        } else if (telegramObject.isCallbackQuery()) {
-            LOGGER.info(String.format("Handling update for callback with data: %s, chat ID: %d", telegramObject.getData(), telegramObject.getId()));
-            updateUserInfo(telegramObject.getFrom());
+        try {
+            if (telegramObject.isMessage()) {
+                LOGGER.info(String.format("Handling update for message with text: %s, chat ID: %d", telegramObject.getText(), telegramObject.getId()));
+                updateUserInfo(telegramObject.getFrom());
+                handlingTextMessage();
+            } else if (telegramObject.isCallbackQuery()) {
+                LOGGER.info(String.format("Handling update for callback with data: %s, chat ID: %d", telegramObject.getData(), telegramObject.getId()));
+                updateUserInfo(telegramObject.getFrom());
+            }
+        } catch (Exception e){
+            LOGGER.error("An error occurred while handling the Telegram object", e);
         }
+
     }
 
+    /**
+     * Обрабатывает текстовые сообщения от пользователя и выполняет соответствующие действия.
+     */
     private void handlingTextMessage() {
+        LOGGER.info("Handling text message");
+
         switch (telegramObject.getText()) {
             case ("/start") -> {
                 changeUserState("main");
-                new MessageSender(telegramObject, allRepository).sendMessage("Добро пожаловать в наш бот");
+                new UserMessageSender(telegramObject, allRepository).sendMessage("Добро пожаловать в наш бот");
+                LOGGER.info("User started the bot");
             }
             case ("\uD83D\uDCDD Оставить отзыв") -> {
                 changeUserState("review");
-                new MessageSender(telegramObject, allRepository).sendMessage("Пришлите ваш отзыв в виде сообщения");
+                new UserMessageSender(telegramObject, allRepository).sendMessage("Пришлите ваш отзыв в виде сообщения");
+                LOGGER.info("User requested to leave a review");
             }
             default -> {
                 String userStatus = allRepository.getUserStateRepository().findById(telegramObject.getId()).get().getUserState();
 
                 switch (userStatus) {
-                    case ("review") -> addReview();
+                    case ("review") -> {
+                        addReview();
+                        LOGGER.info("User left a review");
+                    }
                 }
             }
         }
     }
 
+    /**
+     * Создает и сохраняет отзыв пользователя.
+     * Отправляет ответное сообщение пользователю и уведомление администраторам о новом отзыве.
+     *
+     * @return созданный объект Review
+     */
     private Review addReview() {
         Optional<UserInDataBase> userInDataBase = allRepository.getUserRepository().findById(telegramObject.getId());
 
@@ -93,10 +115,13 @@ public class UpdateHandler {
 
         allRepository.getReviewRepository().save(review);
 
-        MessageSender messageSender = new MessageSender(telegramObject, allRepository);
+        UserMessageSender messageSender = new UserMessageSender(telegramObject, allRepository);
         messageSender.sendMessage("Спасибо за ваш отзыв");
 
-        //Реализовать класс отправки сообщений для администрации.
+        AdminMessageSender adminMessageSender = new AdminMessageSender(allRepository, telegramObject);
+        adminMessageSender.sendMessageToAllAdmin(telegramObject.getText());
+
+        LOGGER.info(String.format("Review added: %s", review));
 
         return review;
     }
@@ -168,7 +193,16 @@ public class UpdateHandler {
         return userInDataBase;
     }
 
-    private void changeUserState(String userState) {
-        new UserStateService(allRepository.getUserStateRepository()).updateUserStatus(telegramObject.getId(), userState);
+    private void changeUserState(String userStatus) {
+        LOGGER.info(String.format("Обновление статуса пользователя с chatId: %d", telegramObject.getId()));
+        UserState userState = allRepository.getUserStateRepository().findById(telegramObject.getId()).orElseGet(() -> {
+            UserState newUserState = new UserState();
+            newUserState.setChatId(telegramObject.getId());
+            return newUserState;
+        });
+
+        userState.setUserStatus(userStatus);
+        allRepository.getUserStateRepository().save(userState);
+        LOGGER.info(String.format("Статус пользователя с chatId: %d успешно обновлен на %s", telegramObject.getId(), userStatus));
     }
 }

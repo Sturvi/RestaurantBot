@@ -49,4 +49,20 @@ public class TelegramObject {
         if (botApiObject instanceof Message) return ((Message) botApiObject).getFrom();
         return null;
     }
+
+    public String stringFrom() {
+        User user = getFrom();
+
+        var stringBuilder = new StringBuilder();
+
+        stringBuilder.append(user.getFirstName()).append(" ");
+
+        if (user.getLastName() != null){
+            stringBuilder.append(user.getLastName()).append(", ");
+        }
+
+        stringBuilder.append("@").append(user.getUserName());
+
+        return stringBuilder.toString();
+    }
 }

@@ -28,6 +28,9 @@ public class UserInDataBase extends TimestampedEntity{
     @Column(name = "username")
     private String username;
 
+    @Column(name = "user_status")
+    private boolean userStatus;
+
     public String getFirstName() {
         return firstName;
     }
@@ -50,5 +53,13 @@ public class UserInDataBase extends TimestampedEntity{
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public boolean isUserStatus() {
+        return userStatus;
+    }
+
+    public void setUserStatus(boolean userStatus) {
+        this.userStatus = userStatus;
     }
 }

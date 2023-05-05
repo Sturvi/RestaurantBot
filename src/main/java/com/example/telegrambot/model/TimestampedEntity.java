@@ -30,8 +30,6 @@ public abstract class TimestampedEntity {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    @Column(name = "user_status")
-    private boolean userStatus;
 
     public Long getId() {
         return id;
@@ -57,11 +55,4 @@ public abstract class TimestampedEntity {
         this.updatedAt = updatedAt;
     }
 
-    public boolean isUserStatus() {
-        return userStatus;
-    }
-
-    public void setUserStatus(boolean userStatus) {
-        this.userStatus = userStatus;
-    }
 }

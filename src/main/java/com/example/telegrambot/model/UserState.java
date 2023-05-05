@@ -35,5 +35,4 @@ public class UserState {
     public void setUserStatus(String userStatus) {
         this.userState = userStatus;
     }
-
 }
