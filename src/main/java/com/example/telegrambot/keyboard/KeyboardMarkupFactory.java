@@ -59,7 +59,7 @@ public class KeyboardMarkupFactory {
 
         List<KeyboardRow> keyboardRowList = new ArrayList<>();
         // Создайте кнопку запроса номера телефона
-        KeyboardButton requestPhoneNumber = new KeyboardButton(" Поделиться номером телефона");
+        KeyboardButton requestPhoneNumber = new KeyboardButton("\uD83D\uDCF1 Поделиться номером телефона");
         requestPhoneNumber.setRequestContact(true);
 
         KeyboardRow row = new KeyboardRow();

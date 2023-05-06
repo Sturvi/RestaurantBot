@@ -2,7 +2,7 @@ package com.example.telegrambot.service;
 
 import com.example.telegrambot.TelegramObject;
 import com.example.telegrambot.keyboard.KeyboardMarkupFactory;
-import com.example.telegrambot.repository.AllRepository;
+import com.example.telegrambot.repository.UserStateRepository;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -20,7 +20,7 @@ public class UserMessageSender extends MessageSender {
     private TelegramObject telegramObject;
 
     @Autowired
-    private AllRepository allRepository;
+    private UserStateRepository userStateRepository;
 
 
     public Message sendMessage(String text) {
@@ -33,7 +33,7 @@ public class UserMessageSender extends MessageSender {
      * Устанавливает клавиатуру согласно статусу пользователя.
      */
     private void setReplyKeyboardMarkupByUserStatus() {
-        String userStatus = allRepository.getUserStateRepository().findById(telegramObject.getId()).get().getUserState();
+        String userStatus = userStateRepository.findById(telegramObject.getId()).get().getUserState();
 
         LOGGER.info(String.format("Setting ReplyKeyboardMarkup for user status: %s", userStatus));
         getSendMessage().setReplyMarkup(KeyboardMarkupFactory.getReplyKeyboardMarkup(userStatus));

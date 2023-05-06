@@ -4,8 +4,11 @@ import com.example.telegrambot.model.Review;
 import com.example.telegrambot.model.UserInDataBase;
 import com.example.telegrambot.model.UserPhoneNumber;
 import com.example.telegrambot.model.UserState;
-import com.example.telegrambot.repository.AllRepository;
 
+import com.example.telegrambot.repository.ReviewRepository;
+import com.example.telegrambot.repository.UserPhoneNumberRepository;
+import com.example.telegrambot.repository.UserRepository;
+import com.example.telegrambot.repository.UserStateRepository;
 import com.example.telegrambot.service.AdminMessageSender;
 import com.example.telegrambot.service.UserMessageSender;
 import org.apache.log4j.Logger;
@@ -29,10 +32,19 @@ import java.util.Optional;
 public class UpdateHandler {
 
     @Autowired
-    AllRepository allRepository;
+    private UserPhoneNumberRepository userPhoneNumberRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private UserStateRepository userStateRepository;
 
     @Autowired
     private UserMessageSender userMessageSender;
+
+    @Autowired
+    private ReviewRepository reviewRepository;
 
     @Autowired
     AdminMessageSender adminMessageSender;
@@ -64,7 +76,7 @@ public class UpdateHandler {
                 LOGGER.info(String.format("Handling update for callback with data: %s, chat ID: %d", telegramObject.getData(), telegramObject.getId()));
                 updateUserInfo(telegramObject.getFrom());
             }
-        } catch (Exception e){
+        } catch (Exception e) {
             LOGGER.error("An error occurred while handling the Telegram object", e);
         }
 
@@ -97,7 +109,7 @@ public class UpdateHandler {
                 messageForAdmin();
             }
             default -> {
-                String userStatus = allRepository.getUserStateRepository().findById(telegramObject.getId()).get().getUserState();
+                String userStatus = userStateRepository.findById(telegramObject.getId()).get().getUserState();
 
                 switch (userStatus) {
                     case ("review") -> {
@@ -109,13 +121,11 @@ public class UpdateHandler {
         }
     }
 
-    private void messageForAdmin () {
+    private void messageForAdmin() {
         String messageText = "Здесь Вы можете написать сообщение Управляющему! " +
                 "Это может быть благодарность, отзыв, предложение, замечание, претензия и другое.";
 
-        Optional<UserPhoneNumber> userPhoneNumber = allRepository
-                .getUserPhoneNumberRepository()
-                .findById(telegramObject.getId());
+        Optional<UserPhoneNumber> userPhoneNumber = userPhoneNumberRepository.findById(telegramObject.getId());
 
         if (userPhoneNumber.isEmpty()) {
             changeUserState("messageToAdminNONUMBER");
@@ -128,14 +138,14 @@ public class UpdateHandler {
     }
 
     private void addReview() {
-        Optional<UserInDataBase> userInDataBase = allRepository.getUserRepository().findById(telegramObject.getId());
+        Optional<UserInDataBase> userInDataBase = userRepository.findById(telegramObject.getId());
 
         Review review = Review.builder()
                 .user(userInDataBase.get())
                 .message(telegramObject.getText())
                 .build();
 
-        allRepository.getReviewRepository().save(review);
+        reviewRepository.save(review);
 
         changeUserState("main");
         userMessageSender.sendMessage("Спасибо за ваш отзыв");
@@ -176,7 +186,7 @@ public class UpdateHandler {
     private UserInDataBase updateUserInfo(User user) {
         LOGGER.info(String.format("Updating user info for user with ID: %d", user.getId()));
 
-        return allRepository.getUserRepository().findById(user.getId()).map(existingUser -> {
+        return userRepository.findById(user.getId()).map(existingUser -> {
             Duration duration = Duration.between(existingUser.getUpdatedAt(), LocalDateTime.now());
             if (duration.toDays() >= 1) {
                 LOGGER.info(String.format("User with ID: %d was last updated more than a day ago, updating...", user.getId()));
@@ -208,21 +218,21 @@ public class UpdateHandler {
                 .userStatus(true)
                 .build();
 
-        allRepository.getUserRepository().save(userInDataBase);
+        userRepository.save(userInDataBase);
 
         return userInDataBase;
     }
 
     private void changeUserState(String userStatus) {
         LOGGER.info(String.format("Обновление статуса пользователя с chatId: %d", telegramObject.getId()));
-        UserState userState = allRepository.getUserStateRepository().findById(telegramObject.getId()).orElseGet(() -> {
+        UserState userState = userStateRepository.findById(telegramObject.getId()).orElseGet(() -> {
             UserState newUserState = new UserState();
             newUserState.setChatId(telegramObject.getId());
             return newUserState;
         });
 
-        userState.setUserStatus(userStatus);
-        allRepository.getUserStateRepository().save(userState);
+        userState.setUserState(userStatus);
+        userStateRepository.save(userState);
         LOGGER.info(String.format("Статус пользователя с chatId: %d успешно обновлен на %s", telegramObject.getId(), userStatus));
     }
 }

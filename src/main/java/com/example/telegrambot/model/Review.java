@@ -3,20 +3,18 @@ package com.example.telegrambot.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
+import lombok.experimental.SuperBuilder;
 
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "reviews")
 @Data
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Review {
+public class Review extends TimestampedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,36 +30,5 @@ public class Review {
     @NotNull
     private String message;
 
-    @Column(name = "review_date", nullable = false, updatable = false)
-    @CreationTimestamp
-    private LocalDateTime reviewDate;
-
-    public Integer getReviewId() {
-        return reviewId;
-    }
-
-    public void setReviewId(Integer reviewId) {
-        this.reviewId = reviewId;
-    }
-
-    public UserInDataBase getUser() {
-        return user;
-    }
-
-    public void setUser(UserInDataBase user) {
-        this.user = user;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public LocalDateTime getReviewDate() {
-        return reviewDate;
-    }
 }
 

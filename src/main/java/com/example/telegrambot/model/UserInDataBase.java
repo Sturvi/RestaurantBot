@@ -2,14 +2,10 @@ package com.example.telegrambot.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import org.hibernate.annotations.CreationTimestamp;
 
-
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users")
@@ -18,6 +14,10 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @SuperBuilder
 public class UserInDataBase extends TimestampedEntity{
+
+    @Id
+    @Column(name = "id")
+    private Long id;
 
     @Column(name = "first_name")
     private String firstName;
@@ -31,35 +31,4 @@ public class UserInDataBase extends TimestampedEntity{
     @Column(name = "user_status")
     private boolean userStatus;
 
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public boolean isUserStatus() {
-        return userStatus;
-    }
-
-    public void setUserStatus(boolean userStatus) {
-        this.userStatus = userStatus;
-    }
 }

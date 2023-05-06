@@ -2,15 +2,14 @@ package com.example.telegrambot.service;
 
 import com.example.telegrambot.TelegramObject;
 import com.example.telegrambot.model.UserRoles;
-import com.example.telegrambot.repository.AllRepository;
 
+import com.example.telegrambot.repository.UserRolesRepository;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,9 +18,10 @@ public class AdminMessageSender extends MessageSender {
 
     private static final Logger LOGGER = Logger.getLogger(AdminMessageSender.class);
 
-    @Autowired
-    private AllRepository allRepository;
     private List<Long> administratorsIdList;
+
+    @Autowired
+    UserRolesRepository userRolesRepository;
 
     private LocalDateTime lastAdminListUpdateTime;
 
@@ -43,10 +43,10 @@ public class AdminMessageSender extends MessageSender {
      * Получает список идентификаторов пользователей с ролью администратора из репозитория.
      */
     private void fetchAdminUserIds() {
-        List<UserRoles> adminRoles = allRepository.getUserRolesRepository().findAllByRole("admin");
+        List<UserRoles> adminRoles = userRolesRepository.findAllByRole("admin");
 
         administratorsIdList = adminRoles.stream()
-                .map(UserRoles::getId)
+                .map(UserRoles::getChatId)
                 .collect(Collectors.toList());
 
         lastAdminListUpdateTime = LocalDateTime.now();
