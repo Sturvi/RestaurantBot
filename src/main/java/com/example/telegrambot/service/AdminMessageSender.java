@@ -5,51 +5,38 @@ import com.example.telegrambot.model.UserRoles;
 import com.example.telegrambot.repository.AllRepository;
 
 import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Component
 public class AdminMessageSender extends MessageSender {
 
     private static final Logger LOGGER = Logger.getLogger(AdminMessageSender.class);
 
+    @Autowired
     private AllRepository allRepository;
     private List<Long> administratorsIdList;
 
     private LocalDateTime lastAdminListUpdateTime;
 
-    private TelegramObject telegramObject;
-
-    /**
-     * Конструктор AdminMessageSender принимает объект AllRepository и TelegramObject и инициализирует список администраторов.
-     *
-     * @param allRepository  объект, содержащий доступ к репозиториям
-     * @param telegramObject объект для работы с текстом сообщений
-     */
-    public AdminMessageSender(AllRepository allRepository, TelegramObject telegramObject) {
-        super();
-        this.allRepository = allRepository;
-        administratorsIdList = new ArrayList<>();
-        this.telegramObject = telegramObject;
-        LOGGER.info("AdminMessageSender initialized");
-    }
-
-    /**
-     * Отправляет сообщение всем администраторам с указанным текстом.
-     *
-     * @param text текст сообщения
-     */
-    public void sendMessageToAllAdmin(String text) {
-        String messageText = "ОСТАВЛЕН НОВЫЙ ОТЗЫВ!\n\n" + telegramObject.stringFrom() + ": \n\n" + text;
-
+    public void sendMessageToAllAdmin(String messageText) {
         for (Long adminId : getAdministratorsIdList()) {
             newSendMessage();
             getSendMessage().setChatId(adminId);
             sendMessage(messageText);
             LOGGER.info(String.format("Sent message to admin with chat ID: %s", adminId));
         }
+    }
+
+    public void sendMessageToAllAdmin(String text, TelegramObject telegramObject) {
+        String messageText = "ОСТАВЛЕН НОВЫЙ ОТЗЫВ!\n\n" + telegramObject.stringFrom() + ": \n\n" + text;
+        sendMessageToAllAdmin(messageText);
     }
 
     /**

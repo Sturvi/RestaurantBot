@@ -47,7 +47,7 @@ public abstract class MessageSender {
      *
      * @return объект Message с результатами отправки сообщения
      */
-    protected Message executeMessage() {
+    private Message executeMessage() {
         sendMessage.enableMarkdown(true);
         sendMessage.enableHtml(true);
 

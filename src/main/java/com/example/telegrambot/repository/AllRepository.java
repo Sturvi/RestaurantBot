@@ -1,5 +1,6 @@
 package com.example.telegrambot.repository;
 
+import com.example.telegrambot.model.UserPhoneNumber;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -7,16 +8,19 @@ import org.springframework.stereotype.Component;
 public class AllRepository {
 
     @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
 
     @Autowired
-    UserStateRepository userStateRepository;
+    private UserStateRepository userStateRepository;
 
     @Autowired
-    ReviewRepository reviewRepository;
+    private ReviewRepository reviewRepository;
 
     @Autowired
-    UserRolesRepository userRolesRepository;
+    private UserRolesRepository userRolesRepository;
+
+    @Autowired
+    private UserPhoneNumberRepository userPhoneNumberRepository;
 
     public UserRepository getUserRepository() {
         return userRepository;
@@ -32,5 +36,9 @@ public class AllRepository {
 
     public UserRolesRepository getUserRolesRepository() {
         return userRolesRepository;
+    }
+
+    public UserPhoneNumberRepository getUserPhoneNumberRepository() {
+        return userPhoneNumberRepository;
     }
 }

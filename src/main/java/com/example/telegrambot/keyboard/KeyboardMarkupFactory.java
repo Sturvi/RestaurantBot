@@ -7,15 +7,19 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import java.util.ArrayList;
 import java.util.List;
 
+
 public class KeyboardMarkupFactory {
 
-    public static ReplyKeyboardMarkup getReplyKeyboardMarkup(String userStatus) {
-        switch (userStatus) {
+    public static ReplyKeyboardMarkup getReplyKeyboardMarkup(String keyboard) {
+        switch (keyboard) {
             case ("main") -> {
                 return getMainReplyKeyboardMarkup();
             }
-            case ("review") -> {
-                return getReviewReplyKeyboardMarkup();
+            case ("review"), ("messageToAdmin") -> {
+                return getCancelKeyboard();
+            }
+            case ("messageToAdminNONUMBER") -> {
+                return getPhoneRequestKeyboard();
             }
             default -> {
                 return null;
@@ -24,20 +28,17 @@ public class KeyboardMarkupFactory {
     }
 
     private static ReplyKeyboardMarkup getMainReplyKeyboardMarkup() {
-        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
-
-        replyKeyboardMarkup.setSelective(true);
-        replyKeyboardMarkup.setResizeKeyboard(true);
-        replyKeyboardMarkup.setOneTimeKeyboard(false);
+        ReplyKeyboardMarkup replyKeyboardMarkup = creatKeyboard();
 
         List<KeyboardRow> keyboardRowList = new ArrayList<>();
-        KeyboardRow keyboardFirstRow = new KeyboardRow();
 
         // Добавление кнопок в первую строку
-        keyboardFirstRow.add(new KeyboardButton("\uD83D\uDCDD Оставить отзыв"));
+        keyboardRowList.add(new KeyboardRow());
+        keyboardRowList.get(0).add(new KeyboardButton("\uD83D\uDCDD Оставить отзыв"));
 
-        // Добавление строк с кнопками в список
-        keyboardRowList.add(keyboardFirstRow);
+        // Добавление кнопок во вторую строку
+        keyboardRowList.add(new KeyboardRow());
+        keyboardRowList.get(1).add(new KeyboardButton("\uD83D\uDCAC Написать администратору"));
 
         // Установка списка строк с кнопками для клавиатуры
         replyKeyboardMarkup.setKeyboard(keyboardRowList);
@@ -45,25 +46,52 @@ public class KeyboardMarkupFactory {
         return replyKeyboardMarkup;
     }
 
-    private static ReplyKeyboardMarkup getReviewReplyKeyboardMarkup() {
+    private static ReplyKeyboardMarkup getCancelKeyboard() {
+        ReplyKeyboardMarkup replyKeyboardMarkup = creatKeyboard();
+
+        addCancelButton(replyKeyboardMarkup);
+
+        return replyKeyboardMarkup;
+    }
+
+    private static ReplyKeyboardMarkup getPhoneRequestKeyboard(){
+        ReplyKeyboardMarkup replyKeyboardMarkup = creatKeyboard();
+
+        List<KeyboardRow> keyboardRowList = new ArrayList<>();
+        // Создайте кнопку запроса номера телефона
+        KeyboardButton requestPhoneNumber = new KeyboardButton(" Поделиться номером телефона");
+        requestPhoneNumber.setRequestContact(true);
+
+        KeyboardRow row = new KeyboardRow();
+        row.add(requestPhoneNumber);
+        keyboardRowList.add(row);
+
+        replyKeyboardMarkup.setKeyboard(keyboardRowList);
+
+        addCancelButton(replyKeyboardMarkup);
+
+        return replyKeyboardMarkup;
+    }
+
+    private static ReplyKeyboardMarkup creatKeyboard () {
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
 
         replyKeyboardMarkup.setSelective(true);
         replyKeyboardMarkup.setResizeKeyboard(true);
         replyKeyboardMarkup.setOneTimeKeyboard(false);
-
-        List<KeyboardRow> keyboardRowList = new ArrayList<>();
-        KeyboardRow keyboardFirstRow = new KeyboardRow();
-
-        // Добавление кнопок в первую строку
-        keyboardFirstRow.add(new KeyboardButton("\uD83D\uDD19 Назад"));
-
-        // Добавление строк с кнопками в список
-        keyboardRowList.add(keyboardFirstRow);
-
-        // Установка списка строк с кнопками для клавиатуры
-        replyKeyboardMarkup.setKeyboard(keyboardRowList);
+        replyKeyboardMarkup.setKeyboard(new ArrayList<KeyboardRow>());
 
         return replyKeyboardMarkup;
+    }
+
+    private static void addCancelButton (ReplyKeyboardMarkup replyKeyboardMarkup){
+        List<KeyboardRow> keyboardRowList = replyKeyboardMarkup.getKeyboard();
+
+        KeyboardRow row = new KeyboardRow();
+        row.add(new KeyboardButton("⛔ Отмена"));
+        keyboardRowList.add(row);
+
+        replyKeyboardMarkup.setKeyboard(keyboardRowList);
+
     }
 }

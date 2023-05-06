@@ -1,9 +1,8 @@
 package com.example.telegrambot.service;
 
 import com.example.telegrambot.UpdateHandler;
-import com.example.telegrambot.repository.AllRepository;
-import com.example.telegrambot.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -16,9 +15,10 @@ import java.util.concurrent.Executors;
 @Component
 public class TelegramBot extends TelegramLongPollingBot  {
 
-    @Autowired
-    AllRepository allRepository;
     private final ExecutorService executorService;
+
+    @Autowired
+    private ApplicationContext applicationContext;
 
     public TelegramBot() {
         super("6272045013:AAGyZKGFDX_5E5jQALnj1FudvH2-yFxtQEs");
@@ -29,8 +29,15 @@ public class TelegramBot extends TelegramLongPollingBot  {
     @Transactional
     public void onUpdateReceived(Update update) {
         Runnable newUserRequest = () -> {
-            Objects.requireNonNull(UpdateHandler.getUpdateHandler(update, allRepository)).handling();
+            try {
+                UpdateHandler updateHandler = applicationContext.getBean(UpdateHandler.class);
+                updateHandler.setTelegramObject(update);
+                updateHandler.handling();
+            } catch (Exception e) {
+                e.printStackTrace(); // Вывод информации об исключении
+            }
         };
+
 
         executorService.submit(newUserRequest);
     }

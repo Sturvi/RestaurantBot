@@ -2,6 +2,7 @@ package com.example.telegrambot;
 
 import com.example.telegrambot.model.Review;
 import com.example.telegrambot.model.UserInDataBase;
+import com.example.telegrambot.model.UserPhoneNumber;
 import com.example.telegrambot.model.UserState;
 import com.example.telegrambot.repository.AllRepository;
 
@@ -9,6 +10,9 @@ import com.example.telegrambot.service.AdminMessageSender;
 import com.example.telegrambot.service.UserMessageSender;
 import org.apache.log4j.Logger;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 
@@ -20,32 +24,29 @@ import java.util.Optional;
 /**
  * Обработчик обновлений.
  */
+@Component
+@Scope("prototype")
 public class UpdateHandler {
 
+    @Autowired
     AllRepository allRepository;
-    private final TelegramObject telegramObject;
+
+    @Autowired
+    private UserMessageSender userMessageSender;
+
+    @Autowired
+    AdminMessageSender adminMessageSender;
+    private TelegramObject telegramObject;
     private static final Logger LOGGER = Logger.getLogger(UpdateHandler.class);
 
-    private UpdateHandler(AllRepository allRepository, TelegramObject telegramObject) {
-        this.allRepository = allRepository;
-        this.telegramObject = telegramObject;
-    }
 
-    /**
-     * Создает экземпляр UpdateHandler, соответствующий типу обновления.
-     *
-     * @param update        Объект Update, содержащий информацию об обновлении.
-     * @param allRepository Репозиторий для доступа к базе данных.
-     * @return Экземпляр UpdateHandler, соответствующий типу обновления.
-     */
-    public static UpdateHandler getUpdateHandler(Update update, AllRepository allRepository) {
+    public void setTelegramObject(Update update) {
         if (isMessageWithText(update)) {
-            TelegramObject newTelegramObject = new TelegramObject(update.getMessage());
-            return new UpdateHandler(allRepository, newTelegramObject);
+            this.telegramObject = new TelegramObject(update.getMessage());
         } else if (isCallbackWithData(update)) {
-            TelegramObject newTelegramObject = new TelegramObject(update.getCallbackQuery());
-            return new UpdateHandler(allRepository, newTelegramObject);
-        } else return null;
+            this.telegramObject = new TelegramObject(update.getCallbackQuery());
+        }
+        userMessageSender.setTelegramObject(telegramObject);
     }
 
     /**
@@ -78,13 +79,22 @@ public class UpdateHandler {
         switch (telegramObject.getText()) {
             case ("/start") -> {
                 changeUserState("main");
-                new UserMessageSender(telegramObject, allRepository).sendMessage("Добро пожаловать в наш бот");
+                userMessageSender.sendMessage("Добро пожаловать в наш бот");
                 LOGGER.info("User started the bot");
             }
             case ("\uD83D\uDCDD Оставить отзыв") -> {
                 changeUserState("review");
-                new UserMessageSender(telegramObject, allRepository).sendMessage("Пришлите ваш отзыв в виде сообщения");
+                userMessageSender.sendMessage("Пришлите ваш отзыв в виде сообщения");
                 LOGGER.info("User requested to leave a review");
+            }
+            case ("⛔ Отмена") -> {
+                changeUserState("main");
+                userMessageSender.sendMessage("Вернулись в главное меню");
+                LOGGER.info("User requested to leave a main");
+            }
+            case ("\uD83D\uDCAC Написать администратору") -> {
+                changeUserState("messageToAdmin");
+                messageForAdmin();
             }
             default -> {
                 String userStatus = allRepository.getUserStateRepository().findById(telegramObject.getId()).get().getUserState();
@@ -99,13 +109,25 @@ public class UpdateHandler {
         }
     }
 
-    /**
-     * Создает и сохраняет отзыв пользователя.
-     * Отправляет ответное сообщение пользователю и уведомление администраторам о новом отзыве.
-     *
-     * @return созданный объект Review
-     */
-    private Review addReview() {
+    private void messageForAdmin () {
+        String messageText = "Здесь Вы можете написать сообщение Управляющему! " +
+                "Это может быть благодарность, отзыв, предложение, замечание, претензия и другое.";
+
+        Optional<UserPhoneNumber> userPhoneNumber = allRepository
+                .getUserPhoneNumberRepository()
+                .findById(telegramObject.getId());
+
+        if (userPhoneNumber.isEmpty()) {
+            changeUserState("messageToAdminNONUMBER");
+
+            messageText += "\n\n" +
+                    "Но для начала пришлите пожалуйста нам свой номер телефона прожав кнопку ниже.";
+        }
+
+        userMessageSender.sendMessage(messageText);
+    }
+
+    private void addReview() {
         Optional<UserInDataBase> userInDataBase = allRepository.getUserRepository().findById(telegramObject.getId());
 
         Review review = Review.builder()
@@ -115,15 +137,13 @@ public class UpdateHandler {
 
         allRepository.getReviewRepository().save(review);
 
-        UserMessageSender messageSender = new UserMessageSender(telegramObject, allRepository);
-        messageSender.sendMessage("Спасибо за ваш отзыв");
+        changeUserState("main");
+        userMessageSender.sendMessage("Спасибо за ваш отзыв");
 
-        AdminMessageSender adminMessageSender = new AdminMessageSender(allRepository, telegramObject);
-        adminMessageSender.sendMessageToAllAdmin(telegramObject.getText());
+        adminMessageSender.sendMessageToAllAdmin(telegramObject.getText(), telegramObject);
 
         LOGGER.info(String.format("Review added: %s", review));
 
-        return review;
     }
 
     /**

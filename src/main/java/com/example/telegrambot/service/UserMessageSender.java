@@ -4,30 +4,24 @@ import com.example.telegrambot.TelegramObject;
 import com.example.telegrambot.keyboard.KeyboardMarkupFactory;
 import com.example.telegrambot.repository.AllRepository;
 import org.apache.log4j.Logger;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
 
 /**
  * Класс для отправки сообщений через Telegram Bot API.
  */
+@Component
+@Scope("prototype")
 public class UserMessageSender extends MessageSender {
     private static final Logger LOGGER = Logger.getLogger(UserMessageSender.class);
-    private final TelegramObject telegramObject;
-    private final AllRepository allRepository;
+    private TelegramObject telegramObject;
 
+    @Autowired
+    private AllRepository allRepository;
 
-    /**
-     * Конструктор класса MessageSender для создания экземпляра с указанными параметрами.
-     *
-     * @param telegramObject объект {@link TelegramObject}, содержащий информацию о пользователе.
-     * @param allRepository  объект {@link AllRepository} для доступа к репозиторию пользователей.
-     */
-    public UserMessageSender(TelegramObject telegramObject, AllRepository allRepository) {
-        super();
-        this.telegramObject = telegramObject;
-        this.allRepository = allRepository;
-    }
 
     public Message sendMessage(String text) {
         getSendMessage().setChatId(telegramObject.getId());
@@ -43,5 +37,14 @@ public class UserMessageSender extends MessageSender {
 
         LOGGER.info(String.format("Setting ReplyKeyboardMarkup for user status: %s", userStatus));
         getSendMessage().setReplyMarkup(KeyboardMarkupFactory.getReplyKeyboardMarkup(userStatus));
+    }
+
+    public void clean(TelegramObject telegramObject) {
+        this.telegramObject = telegramObject;
+        newSendMessage();
+    }
+
+    public void setTelegramObject (TelegramObject telegramObject){
+        clean(telegramObject);
     }
 }
