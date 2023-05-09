@@ -33,7 +33,7 @@ public class UserMessageSender extends MessageSender {
      * Устанавливает клавиатуру согласно статусу пользователя.
      */
     private void setReplyKeyboardMarkupByUserStatus() {
-        String userStatus = userStateRepository.findById(telegramObject.getId()).get().getUserState();
+        String userStatus = userStateRepository.findByChatId(telegramObject.getId()).get().getUserState();
 
         LOGGER.info(String.format("Setting ReplyKeyboardMarkup for user status: %s", userStatus));
         getSendMessage().setReplyMarkup(KeyboardMarkupFactory.getReplyKeyboardMarkup(userStatus));

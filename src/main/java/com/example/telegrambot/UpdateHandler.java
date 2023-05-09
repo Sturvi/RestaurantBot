@@ -71,7 +71,16 @@ public class UpdateHandler {
             if (telegramObject.isMessage()) {
                 LOGGER.info(String.format("Handling update for message with text: %s, chat ID: %d", telegramObject.getText(), telegramObject.getId()));
                 updateUserInfo(telegramObject.getFrom());
-                handlingTextMessage();
+
+                String userStatus = userStateRepository.findByChatId(telegramObject.getId())
+                        .map(UserState::getUserState)
+                        .orElseGet(() -> changeUserState("main"));
+
+                if (telegramObject.isContact() && userStatus.equals("messageToAdminNONUMBER") ) {
+                    handlingContact();
+                } else {
+                    handlingTextMessage();
+                }
             } else if (telegramObject.isCallbackQuery()) {
                 LOGGER.info(String.format("Handling update for callback with data: %s, chat ID: %d", telegramObject.getData(), telegramObject.getId()));
                 updateUserInfo(telegramObject.getFrom());
@@ -79,8 +88,30 @@ public class UpdateHandler {
         } catch (Exception e) {
             LOGGER.error("An error occurred while handling the Telegram object", e);
         }
-
     }
+
+    private void handlingContact() {
+        LOGGER.debug(String.format("Handling contact with phone number: %s, chat ID: %d", telegramObject.getPhoneNumber(), telegramObject.getId()));
+
+        UserPhoneNumber newUserPhoneNumber = userPhoneNumberRepository.findByChatId(telegramObject.getId())
+                .map(existingUserPhoneNumber -> {
+                    existingUserPhoneNumber.setPhoneNumber(telegramObject.getPhoneNumber());
+                    return existingUserPhoneNumber;
+                })
+                .orElseGet(() -> UserPhoneNumber
+                        .builder()
+                        .chatId(telegramObject.getId())
+                        .phoneNumber(telegramObject.getPhoneNumber())
+                        .build());
+
+        userPhoneNumberRepository.save(newUserPhoneNumber);
+
+        changeUserState("messageToAdmin");
+
+        userMessageSender.sendMessage("Теперь можете прислать ваше сообщение.");
+    }
+
+
 
     /**
      * Обрабатывает текстовые сообщения от пользователя и выполняет соответствующие действия.
@@ -109,7 +140,7 @@ public class UpdateHandler {
                 messageForAdmin();
             }
             default -> {
-                String userStatus = userStateRepository.findById(telegramObject.getId()).get().getUserState();
+                String userStatus = userStateRepository.findByChatId(telegramObject.getId()).get().getUserState();
 
                 switch (userStatus) {
                     case ("review") -> {
@@ -135,6 +166,7 @@ public class UpdateHandler {
         }
 
         userMessageSender.sendMessage(messageText);
+
     }
 
     private void addReview() {
@@ -162,7 +194,7 @@ public class UpdateHandler {
      * @return true, если обновление содержит сообщение с текстом, иначе false.
      */
     private static boolean isMessageWithText(Update update) {
-        return !update.hasCallbackQuery() && update.hasMessage() && update.getMessage().hasText();
+        return !update.hasCallbackQuery() && update.hasMessage();
     }
 
     /**
@@ -223,9 +255,9 @@ public class UpdateHandler {
         return userInDataBase;
     }
 
-    private void changeUserState(String userStatus) {
+    private String changeUserState(String userStatus) {
         LOGGER.info(String.format("Обновление статуса пользователя с chatId: %d", telegramObject.getId()));
-        UserState userState = userStateRepository.findById(telegramObject.getId()).orElseGet(() -> {
+        UserState userState = userStateRepository.findByChatId(telegramObject.getId()).orElseGet(() -> {
             UserState newUserState = new UserState();
             newUserState.setChatId(telegramObject.getId());
             return newUserState;
@@ -234,5 +266,7 @@ public class UpdateHandler {
         userState.setUserState(userStatus);
         userStateRepository.save(userState);
         LOGGER.info(String.format("Статус пользователя с chatId: %d успешно обновлен на %s", telegramObject.getId(), userStatus));
+
+        return userStatus;
     }
 }
