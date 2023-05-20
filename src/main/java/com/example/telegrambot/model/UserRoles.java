@@ -14,11 +14,6 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 public class UserRoles extends TimestampedEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private Integer id;
-
     @Column(name = "chat_id", unique = true)
     private Long chatId;
 

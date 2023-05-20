@@ -1,8 +1,8 @@
 package com.example.telegrambot.service.messageSenders;
 
 import com.example.telegrambot.TelegramObject;
+import com.example.telegrambot.service.UserStateService;
 import com.example.telegrambot.service.keyboard.KeyboardMarkupFactory;
-import com.example.telegrambot.repository.UserStateRepository;
 import org.apache.log4j.Logger;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
@@ -13,11 +13,11 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 public class UserMessageSender extends MessageSender {
     private static final Logger LOGGER = Logger.getLogger(UserMessageSender.class);
     private final TelegramObject telegramObject;
-    private final UserStateRepository userStateRepository;
+    private final UserStateService userStateService;
 
-    public UserMessageSender(TelegramObject telegramObject, UserStateRepository userStateRepository) {
+    public UserMessageSender(TelegramObject telegramObject, UserStateService userStateService) {
         this.telegramObject = telegramObject;
-        this.userStateRepository = userStateRepository;
+        this.userStateService = userStateService;
     }
 
 
@@ -31,7 +31,7 @@ public class UserMessageSender extends MessageSender {
      * Устанавливает клавиатуру согласно статусу пользователя.
      */
     private void setReplyKeyboardMarkupByUserStatus() {
-        String userStatus = userStateRepository.findByChatId(telegramObject.getId()).get().getUserState();
+        String userStatus = userStateService.getUserStatus(telegramObject.getId());
 
         LOGGER.info(String.format("Setting ReplyKeyboardMarkup for user status: %s", userStatus));
         getSendMessage().setReplyMarkup(KeyboardMarkupFactory.getReplyKeyboardMarkup(userStatus));

@@ -1,9 +1,9 @@
 package com.example.telegrambot.service.handler;
 
 import com.example.telegrambot.TelegramObject;
-import com.example.telegrambot.repository.UserRepository;
+import com.example.telegrambot.service.UserService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -17,22 +17,12 @@ import org.springframework.stereotype.Component;
 @Component
 @Scope("prototype")
 @Slf4j
+@RequiredArgsConstructor
 public class UpdateHandler implements Handler{
 
     private final ApplicationContext applicationContext;
-    private final UserRepository userRepository;
+    private final UserService userService;
 
-    /**
-     * Constructs a new UpdateHandler with the given ApplicationContext and UserRepository.
-     *
-     * @param applicationContext the ApplicationContext to use for retrieving handler beans
-     * @param userRepository the UserRepository to use for updating user information
-     */
-    @Autowired
-    public UpdateHandler(ApplicationContext applicationContext, UserRepository userRepository) {
-        this.applicationContext = applicationContext;
-        this.userRepository = userRepository;
-    }
 
     /**
      * Handles the given TelegramObject by updating user information in the UserRepository and
@@ -42,12 +32,12 @@ public class UpdateHandler implements Handler{
      */
     @Override
     public void handle(TelegramObject telegramObject) {
-        userRepository.updateUserInfo(telegramObject.getFrom());
+        userService.updateUserInfo(telegramObject.getFrom());
 
         try {
-            if (telegramObject.isMessage()) {
+            if (Boolean.TRUE.equals(telegramObject.isMessage())) {
                 applicationContext.getBean(MessageUpdateHandler.class).handle(telegramObject);
-            } else if (telegramObject.isCallbackQuery()) {
+            } else if (Boolean.TRUE.equals(telegramObject.isCallbackQuery())) {
                 log.debug("Handling update for callback with data: {}, chat ID: {}", telegramObject.getData(), telegramObject.getId());
             }
         } catch (Exception e) {

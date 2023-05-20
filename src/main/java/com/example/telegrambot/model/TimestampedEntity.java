@@ -1,8 +1,6 @@
 package com.example.telegrambot.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Id;
-import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -19,6 +17,10 @@ import java.time.LocalDateTime;
 @SuperBuilder
 public abstract class TimestampedEntity {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Integer id;
 
     @Column(name = "created_at", updatable = false)
     @CreationTimestamp

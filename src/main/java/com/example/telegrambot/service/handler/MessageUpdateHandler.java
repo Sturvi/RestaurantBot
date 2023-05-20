@@ -8,9 +8,11 @@ import com.example.telegrambot.model.UserState;
 import com.example.telegrambot.repository.UserPhoneNumberRepository;
 import com.example.telegrambot.repository.UserRepository;
 import com.example.telegrambot.repository.UserStateRepository;
+import com.example.telegrambot.service.UserStateService;
 import com.example.telegrambot.service.messageSenders.AdminMessageSender;
 import com.example.telegrambot.service.ReviewService;
 import com.example.telegrambot.service.messageSenders.UserMessageSender;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -20,34 +22,24 @@ import java.util.Optional;
 @Component
 @Scope("prototype")
 @Slf4j
+@RequiredArgsConstructor
 public class MessageUpdateHandler implements Handler {
     private TelegramObject telegramObject;
-    private final UserStateRepository userStateRepository;
+    private final UserStateService userStateService;
     private final UserPhoneNumberRepository userPhoneNumberRepository;
     private UserMessageSender userMessageSender;
     private final AdminMessageSender adminMessageSender;
     private final UserRepository userRepository;
     private final ReviewService reviewService;
 
-    public MessageUpdateHandler(UserStateRepository userStateRepository, UserPhoneNumberRepository userPhoneNumberRepository, AdminMessageSender adminMessageSender, UserRepository userRepository, ReviewService reviewService) {
-        this.userStateRepository = userStateRepository;
-        this.userPhoneNumberRepository = userPhoneNumberRepository;
-        this.adminMessageSender = adminMessageSender;
-        this.userRepository = userRepository;
-        this.reviewService = reviewService;
-    }
-
-
     @Override
     public void handle(TelegramObject telegramObject) {
         this.telegramObject = telegramObject;
-        userMessageSender = new UserMessageSender(telegramObject, userStateRepository);
+        userMessageSender = new UserMessageSender(telegramObject, userStateService);
 
         log.debug("Handling update for message with text: {}, chat ID: {}", telegramObject.getText(), telegramObject.getId());
 
-        String userStatus = userStateRepository.findByChatId(telegramObject.getId())
-                .map(UserState::getUserState)
-                .orElseGet(() -> userStateRepository.changeUserState("main", telegramObject));
+        String userStatus = userStateService.getUserStatus(telegramObject.getId());
 
         if (Boolean.TRUE.equals(telegramObject.isContact()) && userStatus.equals("messageToAdminNONUMBER") ) {
             handlingContact();
@@ -72,7 +64,7 @@ public class MessageUpdateHandler implements Handler {
 
         userPhoneNumberRepository.save(newUserPhoneNumber);
 
-        userStateRepository.changeUserState("messageToAdmin", telegramObject);
+        userStateService.changeUserState("messageToAdmin", telegramObject);
 
         userMessageSender.sendMessage("Теперь можете прислать ваше сообщение.");
     }
@@ -85,26 +77,26 @@ public class MessageUpdateHandler implements Handler {
 
         switch (telegramObject.getText()) {
             case ("/start") -> {
-                userStateRepository.changeUserState("main", telegramObject);
+                userStateService.changeUserState("main", telegramObject);
                 userMessageSender.sendMessage("Добро пожаловать в наш бот");
                 log.debug("User started the bot");
             }
             case ("\uD83D\uDCDD Оставить отзыв") -> {
-                userStateRepository.changeUserState("review", telegramObject);
+                userStateService.changeUserState("review", telegramObject);
                 userMessageSender.sendMessage("Пришлите ваш отзыв в виде сообщения");
                 log.debug("User requested to leave a review");
             }
             case ("⛔ Отмена") -> {
-                userStateRepository.changeUserState("main", telegramObject);
+                userStateService.changeUserState("main", telegramObject);
                 userMessageSender.sendMessage("Вернулись в главное меню");
                 log.debug("User requested to leave a main");
             }
             case ("\uD83D\uDCAC Написать администратору") -> {
-                userStateRepository.changeUserState("messageToAdmin", telegramObject);
+                userStateService.changeUserState("messageToAdmin", telegramObject);
                 messageForAdmin();
             }
             default -> {
-                String userStatus = userStateRepository.findByChatId(telegramObject.getId()).get().getUserState();
+                String userStatus = userStateService.getUserStatus(telegramObject.getId());
 
                 switch (userStatus) {
                     case ("review") -> {
@@ -122,7 +114,7 @@ public class MessageUpdateHandler implements Handler {
         Optional<UserPhoneNumber> userPhoneNumber = userPhoneNumberRepository.findByChatId(telegramObject.getId());
 
         if (userPhoneNumber.isEmpty()) {
-            userStateRepository.changeUserState("messageToAdminNONUMBER", telegramObject);
+            userStateService.changeUserState("messageToAdminNONUMBER", telegramObject);
 
             messageText += "\n\nНо для начала пришлите пожалуйста нам свой номер телефона прожав кнопку ниже.";
         }
@@ -137,7 +129,7 @@ public class MessageUpdateHandler implements Handler {
         if (userInDataBase.isPresent()) {
             Review review = reviewService.createReview(userInDataBase.get(), telegramObject.getText());
 
-            userStateRepository.changeUserState("main", telegramObject);
+            userStateService.changeUserState("main", telegramObject);
             userMessageSender.sendMessage("Спасибо за ваш отзыв");
 
             adminMessageSender.sendMessageToAllAdmin(telegramObject.getText(), telegramObject);

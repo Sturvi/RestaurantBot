@@ -16,11 +16,6 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 public class Review extends TimestampedEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "review_id")
-    private Integer reviewId;
-
     @ManyToOne
     @NotNull
     @JoinColumn(name = "chat_id", referencedColumnName = "id")

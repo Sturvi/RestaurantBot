@@ -15,9 +15,8 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 public class UserInDataBase extends TimestampedEntity{
 
-    @Id
-    @Column(name = "id")
-    private Long id;
+    @Column(name = "chat_id")
+    private Long chatId;
 
     @Column(name = "first_name")
     private String firstName;
