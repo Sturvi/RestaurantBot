@@ -1,4 +1,4 @@
-package com.example.telegrambot.service;
+package com.example.telegrambot.service.messageSenders;
 
 import com.example.telegrambot.TelegramObject;
 import com.example.telegrambot.model.UserRoles;

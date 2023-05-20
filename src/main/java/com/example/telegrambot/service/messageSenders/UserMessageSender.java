@@ -1,26 +1,24 @@
-package com.example.telegrambot.service;
+package com.example.telegrambot.service.messageSenders;
 
 import com.example.telegrambot.TelegramObject;
-import com.example.telegrambot.keyboard.KeyboardMarkupFactory;
+import com.example.telegrambot.service.keyboard.KeyboardMarkupFactory;
 import com.example.telegrambot.repository.UserStateRepository;
 import org.apache.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
 
 /**
  * Класс для отправки сообщений через Telegram Bot API.
  */
-@Component
-@Scope("prototype")
 public class UserMessageSender extends MessageSender {
     private static final Logger LOGGER = Logger.getLogger(UserMessageSender.class);
-    private TelegramObject telegramObject;
+    private final TelegramObject telegramObject;
+    private final UserStateRepository userStateRepository;
 
-    @Autowired
-    private UserStateRepository userStateRepository;
+    public UserMessageSender(TelegramObject telegramObject, UserStateRepository userStateRepository) {
+        this.telegramObject = telegramObject;
+        this.userStateRepository = userStateRepository;
+    }
 
 
     public Message sendMessage(String text) {
@@ -39,12 +37,12 @@ public class UserMessageSender extends MessageSender {
         getSendMessage().setReplyMarkup(KeyboardMarkupFactory.getReplyKeyboardMarkup(userStatus));
     }
 
-    public void clean(TelegramObject telegramObject) {
+/*    public void clean(TelegramObject telegramObject) {
         this.telegramObject = telegramObject;
         newSendMessage();
     }
 
     public void setTelegramObject (TelegramObject telegramObject){
         clean(telegramObject);
-    }
+    }*/
 }

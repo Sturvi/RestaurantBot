@@ -1,6 +1,7 @@
 package com.example.telegrambot.service;
 
-import com.example.telegrambot.UpdateHandler;
+import com.example.telegrambot.TelegramObject;
+import com.example.telegrambot.service.handler.UpdateHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
@@ -8,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -31,13 +31,11 @@ public class TelegramBot extends TelegramLongPollingBot  {
         Runnable newUserRequest = () -> {
             try {
                 UpdateHandler updateHandler = applicationContext.getBean(UpdateHandler.class);
-                updateHandler.setTelegramObject(update);
-                updateHandler.handling();
+                updateHandler.handle(TelegramObject.getTelegramObject(update));
             } catch (Exception e) {
                 e.printStackTrace(); // Вывод информации об исключении
             }
         };
-
 
         executorService.submit(newUserRequest);
     }

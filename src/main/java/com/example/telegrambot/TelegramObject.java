@@ -1,14 +1,17 @@
 package com.example.telegrambot;
 
+import lombok.extern.slf4j.Slf4j;
 import org.telegram.telegrambots.meta.api.interfaces.BotApiObject;
-import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
-import org.telegram.telegrambots.meta.api.objects.Contact;
-import org.telegram.telegrambots.meta.api.objects.Message;
-import org.telegram.telegrambots.meta.api.objects.User;
+import org.telegram.telegrambots.meta.api.objects.*;
 
+/**
+ * This class represents a Telegram object that can be either a message or a callback query.
+ * It provides methods to initialize the object and get its properties.
+ */
+@Slf4j
 public class TelegramObject {
 
-    private final BotApiObject botApiObject;
+    private BotApiObject botApiObject;
     private Boolean isMessage;
     private Boolean isCallbackQuery;
     private Boolean isContact;
@@ -20,10 +23,8 @@ public class TelegramObject {
     private Contact contact;
     private String phoneNumber;
 
-
-
-    public TelegramObject(BotApiObject botApiObject) {
-        this.botApiObject = botApiObject;
+    private TelegramObject() {
+        this.botApiObject = null;
         this.isMessage = null;
         this.isCallbackQuery = null;
         this.isContact = null;
@@ -36,7 +37,30 @@ public class TelegramObject {
         this.phoneNumber = null;
     }
 
+    /**
+     * Initializes the Telegram object based on the given update.
+     *
+     * @param update the update to initialize the object from
+     * @return the initialized Telegram object
+     */
+    public static TelegramObject getTelegramObject(Update update) {
+        TelegramObject telegramObject = new TelegramObject();
 
+        if (isMessageWithText(update)) {
+            telegramObject.botApiObject = update.getMessage();
+        } else if (isCallbackWithData(update)) {
+            telegramObject.botApiObject = update.getCallbackQuery();
+        }
+        telegramObject.initTelegramObject();
+
+        return telegramObject;
+    }
+
+    /**
+     * Returns a string representation of the user who sent the message or callback query.
+     *
+     * @return the string representation of the user
+     */
     public String stringFrom() {
         User user = getFrom();
 
@@ -44,7 +68,7 @@ public class TelegramObject {
 
         stringBuilder.append(user.getFirstName()).append(" ");
 
-        if (user.getLastName() != null){
+        if (user.getLastName() != null) {
             stringBuilder.append(user.getLastName()).append(", ");
         }
 
@@ -53,67 +77,115 @@ public class TelegramObject {
         return stringBuilder.toString();
     }
 
+    /**
+     * Returns true if the Telegram object is a message, false otherwise.
+     *
+     * @return true if the Telegram object is a message, false otherwise
+     */
     public Boolean isMessage() {
-        if (isMessage == null) initTelegramObject();
         return isMessage;
     }
 
+    /**
+     * Returns true if the Telegram object is a callback query, false otherwise.
+     *
+     * @return true if the Telegram object is a callback query, false otherwise
+     */
     public Boolean isCallbackQuery() {
-        if (isCallbackQuery == null) initTelegramObject();
         return isCallbackQuery;
     }
 
+    /**
+     * Returns the chat ID of the message or callback query.
+     *
+     * @return the chat ID
+     */
     public Long getId() {
-        if (id == null) initTelegramObject();
         return id;
     }
 
+    /**
+     * Returns the message ID of the message or callback query.
+     *
+     * @return the message ID
+     */
     public Integer getMessageId() {
-        if (messageId == null) initTelegramObject();
         return messageId;
     }
 
+    /**
+     * Returns the text of the message or callback query.
+     *
+     * @return the text
+     */
     public String getText() {
-        if (text == null) initTelegramObject();
         return text;
     }
 
+    /**
+     * Returns the data of the callback query.
+     *
+     * @return the data
+     */
     public String getData() {
-        if (data == null) initTelegramObject();
         return data;
     }
 
+    /**
+     * Returns the user who sent the message or callback query.
+     *
+     * @return the user
+     */
     public User getFrom() {
-        if (from == null) initTelegramObject();
         return from;
     }
 
+    /**
+     * Returns true if the message contains a contact, false otherwise.
+     *
+     * @return true if the message contains a contact, false otherwise
+     */
     public Boolean isContact() {
-        if (isContact == null) initTelegramObject();
         return isContact;
     }
 
+    /**
+     * Returns the phone number of the contact in the message.
+     *
+     * @return the phone number
+     */
     public String getPhoneNumber() {
-        if (phoneNumber == null) initTelegramObject();
         return phoneNumber;
     }
 
+    /**
+     * Returns the contact in the message.
+     *
+     * @return the contact
+     */
     public Contact getContact() {
-        if (contact == null) initTelegramObject();
         return contact;
     }
 
+    /**
+     * Initializes the Telegram object based on the type of the bot API object.
+     */
     private void initTelegramObject() {
         isMessage = botApiObject instanceof Message;
         isCallbackQuery = botApiObject instanceof CallbackQuery;
 
-        if (isMessage) {
+        if (Boolean.TRUE.equals(isMessage)) {
             initMessageObject((Message) botApiObject);
-        } else if (isCallbackQuery) {
+        } else if (Boolean.TRUE.equals(isCallbackQuery)) {
             initCallbackQueryObject((CallbackQuery) botApiObject);
         }
     }
 
+    /**
+     * Initializes the message object based on the given message.
+     *
+     * @param message the message to initialize the object from
+     */
     private void initMessageObject(Message message) {
         id = message.getChatId();
         messageId = message.getMessageId();
@@ -122,11 +194,16 @@ public class TelegramObject {
         from = message.getFrom();
         isContact = message.hasContact();
         contact = message.getContact();
-        if (isContact) {
+        if (Boolean.TRUE.equals(isContact)) {
             phoneNumber = contact.getPhoneNumber();
         }
     }
 
+    /**
+     * Initializes the callback query object based on the given callback query.
+     *
+     * @param callbackQuery the callback query to initialize the object from
+     */
     private void initCallbackQueryObject(CallbackQuery callbackQuery) {
         id = callbackQuery.getFrom().getId();
         messageId = callbackQuery.getMessage().getMessageId();
@@ -136,5 +213,13 @@ public class TelegramObject {
         isContact = false;
         contact = null;
         phoneNumber = null;
+    }
+
+    private static boolean isMessageWithText(Update update) {
+        return !update.hasCallbackQuery() && update.hasMessage();
+    }
+
+     private static boolean isCallbackWithData(Update update) {
+        return update.hasCallbackQuery() && update.getCallbackQuery().getData() != null && !update.getCallbackQuery().getData().isEmpty();
     }
 }

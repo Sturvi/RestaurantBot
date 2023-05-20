@@ -1,5 +1,6 @@
-package com.example.telegrambot.service;
+package com.example.telegrambot.service.messageSenders;
 
+import com.example.telegrambot.service.TelegramBot;
 import org.apache.log4j.Logger;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
