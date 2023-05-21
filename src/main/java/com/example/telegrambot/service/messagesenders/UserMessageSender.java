@@ -1,21 +1,29 @@
 package com.example.telegrambot.service.messagesenders;
 
 import com.example.telegrambot.TelegramObject;
+import com.example.telegrambot.model.UserStateEnum;
+import com.example.telegrambot.service.TelegramBot;
 import com.example.telegrambot.service.UserStateService;
 import com.example.telegrambot.service.keyboard.KeyboardMarkupFactory;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
 /**
  * This class is responsible for sending messages via the Telegram Bot API.
  */
 @Slf4j
+@Component
+@Scope("prototype")
 public class UserMessageSender extends MessageSender {
-    private final TelegramObject telegramObject;
+    private TelegramObject telegramObject;
     private final UserStateService userStateService;
 
-    public UserMessageSender(TelegramObject telegramObject, UserStateService userStateService) {
-        this.telegramObject = telegramObject;
+    @Autowired
+    public UserMessageSender(TelegramBot telegramBot, UserStateService userStateService) {
+        super(telegramBot);
         this.userStateService = userStateService;
     }
 
@@ -35,21 +43,18 @@ public class UserMessageSender extends MessageSender {
      * Sets the reply keyboard markup according to the user's status.
      */
     private void setReplyKeyboardMarkupByUserStatus() {
-        String userStatus = userStateService.getUserStatus(telegramObject.getId());
+        UserStateEnum userState = userStateService.getUserStatus(telegramObject.getId());
 
-        log.debug("Setting ReplyKeyboardMarkup for user status: {}", userStatus);
-        getSendMessage().setReplyMarkup(KeyboardMarkupFactory.getReplyKeyboardMarkup(userStatus));
+        log.debug("Setting ReplyKeyboardMarkup for user status: {}", userState);
+        getSendMessage().setReplyMarkup(KeyboardMarkupFactory.getReplyKeyboardMarkup(userState));
     }
 
-
-    // todo: не делай так, лучше просто удалить код.
-    //  Если понадобится - можно вытянуть из коммита с удалением
-/*    public void clean(TelegramObject telegramObject) {
+    public void clean(TelegramObject telegramObject) {
         this.telegramObject = telegramObject;
         newSendMessage();
     }
 
     public void setTelegramObject (TelegramObject telegramObject){
         clean(telegramObject);
-    }*/
+    }
 }

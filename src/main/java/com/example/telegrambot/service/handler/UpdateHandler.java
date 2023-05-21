@@ -32,11 +32,10 @@ public class UpdateHandler implements Handler{
      */
     @Override
     public void handle(TelegramObject telegramObject) {
-        userService.updateUserInfo(telegramObject.getFrom());
+        userService.saveOrUpdateUser(telegramObject.getFrom());
 
         try {
-            // todo: isMessage, isCallbackQuery уже возвращают boolean, не нужно делать лишнюю проверку
-            if (Boolean.TRUE.equals(telegramObject.isMessage())) {
+            if (telegramObject.isMessage()) {
                 // todo: Прототипы нужно инжектить по-другому. Подробности в классе TelegramBot
                 applicationContext.getBean(MessageUpdateHandler.class).handle(telegramObject);
             } else if (Boolean.TRUE.equals(telegramObject.isCallbackQuery())) {

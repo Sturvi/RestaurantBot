@@ -1,12 +1,12 @@
 package com.example.telegrambot.repository;
 
-import com.example.telegrambot.model.UserPhoneNumber;
+import com.example.telegrambot.model.UserPhoneNumberEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
 @Repository
-public interface UserPhoneNumberRepository extends JpaRepository<UserPhoneNumber, Long> {
-    Optional<UserPhoneNumber> findByChatId(Long chatId);
+public interface UserPhoneNumberRepository extends JpaRepository<UserPhoneNumberEntity, Integer> {
+    Optional<UserPhoneNumberEntity> findByChatId(Long chatId);
 }

@@ -14,15 +14,14 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-// todo: имя сущности - ReviewEntity
-public class Review extends TimestampedEntity {
+public class ReviewEntity extends TimestampedEntity {
 
     @ManyToOne
     @NotNull
     @JoinColumn(name = "chat_id", referencedColumnName = "chat_id")
     // todo: Рекоммендация - установи JPA-BUDDY, он упрощает создание сущностей
     //       https://jpa-buddy.com/documentation/#installation-and-project-setup
-    private UserInDataBase user;
+    private UserEntity user;
 
     @Column(name = "message", nullable = false)
     @NotNull

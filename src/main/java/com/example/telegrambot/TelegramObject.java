@@ -12,9 +12,9 @@ import org.telegram.telegrambots.meta.api.objects.*;
 public class TelegramObject {
 
     private BotApiObject botApiObject;
-    private Boolean isMessage;
-    private Boolean isCallbackQuery;
-    private Boolean isContact;
+    private boolean isMessage;
+    private boolean isCallbackQuery;
+    private boolean isContact;
     private Long id;
     private Integer messageId;
     private String text;
@@ -23,19 +23,6 @@ public class TelegramObject {
     private Contact contact;
     private String phoneNumber;
 
-    private TelegramObject() {
-        this.botApiObject = null;
-        this.isMessage = null;
-        this.isCallbackQuery = null;
-        this.isContact = null;
-        this.id = null;
-        this.messageId = null;
-        this.text = null;
-        this.data = null;
-        this.from = null;
-        this.contact = null;
-        this.phoneNumber = null;
-    }
 
     /**
      * Initializes the Telegram object based on the given update.
@@ -82,7 +69,7 @@ public class TelegramObject {
      *
      * @return true if the Telegram object is a message, false otherwise
      */
-    public Boolean isMessage() {
+    public boolean isMessage() {
         return isMessage;
     }
 
@@ -91,7 +78,7 @@ public class TelegramObject {
      *
      * @return true if the Telegram object is a callback query, false otherwise
      */
-    public Boolean isCallbackQuery() {
+    public boolean isCallbackQuery() {
         return isCallbackQuery;
     }
 
@@ -145,7 +132,7 @@ public class TelegramObject {
      *
      * @return true if the message contains a contact, false otherwise
      */
-    public Boolean isContact() {
+    public boolean isContact() {
         return isContact;
     }
 
@@ -219,11 +206,11 @@ public class TelegramObject {
         return !update.hasCallbackQuery() && update.hasMessage();
     }
 
-     private static boolean isCallbackWithData(Update update) {
-        // todo: не делай такие длинные строки,
-        //  неудобно читать, трудно понимать
-        return update.hasCallbackQuery()
-                && update.getCallbackQuery().getData() != null
-                && !update.getCallbackQuery().getData().isEmpty();
+    private static boolean isCallbackWithData(Update update) {
+        CallbackQuery callbackQuery = update.getCallbackQuery();
+        String data = callbackQuery.getData();
+        boolean hasData = data != null && !data.isEmpty();
+
+        return update.hasCallbackQuery() && hasData;
     }
 }

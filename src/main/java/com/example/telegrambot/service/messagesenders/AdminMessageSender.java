@@ -1,9 +1,11 @@
 package com.example.telegrambot.service.messagesenders;
 
 import com.example.telegrambot.TelegramObject;
-import com.example.telegrambot.model.UserRoles;
+import com.example.telegrambot.model.UserRolesEntity;
 import com.example.telegrambot.repository.UserRolesRepository;
+import com.example.telegrambot.service.TelegramBot;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -20,7 +22,9 @@ public class AdminMessageSender extends MessageSender {
 
     private LocalDateTime lastAdminListUpdateTime;
 
-    public AdminMessageSender(UserRolesRepository userRolesRepository) {
+    @Autowired
+    public AdminMessageSender(TelegramBot telegramBot, UserRolesRepository userRolesRepository) {
+        super(telegramBot);
         this.userRolesRepository = userRolesRepository;
     }
 
@@ -59,10 +63,10 @@ public class AdminMessageSender extends MessageSender {
      * Fetches the list of user IDs with the "admin" role from the repository.
      */
     private void fetchAdminUserIds() {
-        List<UserRoles> adminRoles = userRolesRepository.findAllByRole("admin");
+        List<UserRolesEntity> adminRoles = userRolesRepository.findAllByRole("admin");
 
         administratorsIdList = adminRoles.stream()
-                .map(UserRoles::getChatId)
+                .map(UserRolesEntity::getChatId)
                 .toList();
 
         lastAdminListUpdateTime = LocalDateTime.now();

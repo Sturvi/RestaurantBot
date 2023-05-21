@@ -1,5 +1,6 @@
 package com.example.telegrambot.service.keyboard;
 
+import com.example.telegrambot.model.UserStateEnum;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
@@ -14,21 +15,20 @@ public class KeyboardMarkupFactory {
     }
 
     /**
-     * Returns a ReplyKeyboardMarkup object based on the specified keyboard type.
+     * Returns a ReplyKeyboardMarkup object based on the specified user state.
      *
-     * @param keyboard the type of keyboard to create
-     * @return a ReplyKeyboardMarkup object based on the specified keyboard type
+     * @param userStateEnum the user state to create the keyboard for
+     * @return a ReplyKeyboardMarkup object based on the specified user state
      */
-    public static ReplyKeyboardMarkup getReplyKeyboardMarkup(String keyboard) {
-        // todo: типы клавиатур лучше поместить в енам
-        switch (keyboard) {
-            case ("main") -> {
+    public static ReplyKeyboardMarkup getReplyKeyboardMarkup(UserStateEnum userStateEnum) {
+        switch (userStateEnum) {
+            case MAIN -> {
                 return getMainReplyKeyboardMarkup();
             }
-            case ("review"), ("messageToAdmin") -> {
+            case REVIEW, MESSAGE_TO_ADMIN -> {
                 return getCancelKeyboard();
             }
-            case ("messageToAdminNONUMBER") -> {
+            case REQUEST_PHONE_NUMBER -> {
                 return getPhoneRequestKeyboard();
             }
             default -> {
@@ -43,7 +43,7 @@ public class KeyboardMarkupFactory {
      * @return a ReplyKeyboardMarkup object with the main keyboard layout
      */
     private static ReplyKeyboardMarkup getMainReplyKeyboardMarkup() {
-        ReplyKeyboardMarkup replyKeyboardMarkup = creatKeyboard();
+        ReplyKeyboardMarkup replyKeyboardMarkup = createKeyboard();
 
         List<KeyboardRow> keyboardRowList = new ArrayList<>();
 
@@ -67,7 +67,7 @@ public class KeyboardMarkupFactory {
      * @return a ReplyKeyboardMarkup object with a cancel button
      */
     private static ReplyKeyboardMarkup getCancelKeyboard() {
-        ReplyKeyboardMarkup replyKeyboardMarkup = creatKeyboard();
+        ReplyKeyboardMarkup replyKeyboardMarkup = createKeyboard();
 
         addCancelButton(replyKeyboardMarkup);
 
@@ -80,7 +80,7 @@ public class KeyboardMarkupFactory {
      * @return a ReplyKeyboardMarkup object with a button to request the user's phone number
      */
     private static ReplyKeyboardMarkup getPhoneRequestKeyboard() {
-        ReplyKeyboardMarkup replyKeyboardMarkup = creatKeyboard();
+        ReplyKeyboardMarkup replyKeyboardMarkup = createKeyboard();
 
         List<KeyboardRow> keyboardRowList = new ArrayList<>();
         // Create a button to request the phone number
@@ -103,13 +103,13 @@ public class KeyboardMarkupFactory {
      *
      * @return a new ReplyKeyboardMarkup object
      */
-    private static ReplyKeyboardMarkup creatKeyboard() {
+    private static ReplyKeyboardMarkup createKeyboard() {
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
 
         replyKeyboardMarkup.setSelective(true);
         replyKeyboardMarkup.setResizeKeyboard(true);
         replyKeyboardMarkup.setOneTimeKeyboard(false);
-        replyKeyboardMarkup.setKeyboard(new ArrayList<KeyboardRow>());
+        replyKeyboardMarkup.setKeyboard(new ArrayList<>());
 
         return replyKeyboardMarkup;
     }
