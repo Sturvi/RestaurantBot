@@ -220,6 +220,10 @@ public class TelegramObject {
     }
 
      private static boolean isCallbackWithData(Update update) {
-        return update.hasCallbackQuery() && update.getCallbackQuery().getData() != null && !update.getCallbackQuery().getData().isEmpty();
+        // todo: не делай такие длинные строки,
+        //  неудобно читать, трудно понимать
+        return update.hasCallbackQuery()
+                && update.getCallbackQuery().getData() != null
+                && !update.getCallbackQuery().getData().isEmpty();
     }
 }

@@ -13,6 +13,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
+// todo: Имя сущности - ИмяТаблицыБезПодчёркиванийEntity (UserEntity)
 public class UserInDataBase extends TimestampedEntity{
 
     @Column(name = "chat_id", unique = true)

@@ -26,21 +26,28 @@ public class UserService {
      * @param user An instance of User containing information about the user.
      * @return An instance of UserInDataBase containing the updated user information.
      */
+    // todo: Нейминг. Метод возвращает активного пользователя, либо обновляет, либо создаёт нового.
+    //       А имя говорит о том, что метод просто обновляет пользователя.
     public UserInDataBase updateUserInfo(User user) {
         log.debug("Updating user info for user with ID: {}", user.getId());
 
-         return userRepository.findByChatId(user.getId()).map(existingUser -> {
+        return userRepository.findByChatId(user.getId()).map(existingUser -> {
             Duration duration = Duration.between(existingUser.getUpdatedAt(), LocalDateTime.now());
             if (duration.toDays() >= 1) {
+                // todo: duration.toDays() что покажет, если в нём будет посчитано секунд на 1.9999 дня?
+                //  Если 1 - то потенциально может возникнуть баг, лучше считать количество дней по секундам в сутках.
+                //  Если duration.toSeconds() > SECONDS_PER_DAY
                 log.debug("User with ID: {} was last updated more than a day ago, updating...", user.getId());
-                return updateUserInDataBase(user);
+                // todo: метод не только обновляет пользователя, но и создаёт нового, если его нет в бд.
+                //  Лучше переименовать в saveOrUpdateUser
+                return updateUser(user);
             } else {
                 log.debug("User with ID: {} was last updated less than a day ago, no update needed", user.getId());
                 return existingUser;
             }
         }).orElseGet(() -> {
             log.debug("User with ID: {} not found in database, creating new user...", user.getId());
-            return updateUserInDataBase(user);
+            return updateUser(user);
         });
     }
 
@@ -50,9 +57,11 @@ public class UserService {
      * @param user An instance of User containing information about the user.
      * @return An instance of UserInDataBase containing the updated user information.
      */
-    private UserInDataBase updateUserInDataBase(User user) {
+    private UserInDataBase updateUser(User user) {
         log.debug("Saving user with ID: {}", user.getId());
 
+        // todo: функциональность маппера, лучше вынести в отдельный класс UserMapper и вызывать его метод для получения
+        //  сущности из телеграмовского объекта.
         UserInDataBase userInDataBase = UserInDataBase.builder()
                 .chatId(user.getId())
                 .firstName(user.getFirstName())

@@ -45,6 +45,12 @@ public class AdminMessageSender extends MessageSender {
      * @param telegramObject the TelegramObject containing the chat ID
      */
     public void sendMessageToAllAdmin(String text, TelegramObject telegramObject) {
+        // todo: имя метода говорит об отправке сообщения всем админам без указания типа сообщения,
+        //  а на деле мы отправляем админам уведомление о новом отзыве.
+        //  Класс отвечает за отправку сообщений, а тут получается ещё какое-то событие обрабатывается.
+        //  Обработку события с новым отзывом лучше вынести в отдельный класс (CustomerEventHandler например)
+        //  и текст сообщения генерировать в нём, вызывать отправку сообщения с заданным текстом у класса AdminMessageSender.
+        //  Иначе выходит нарушение единой ответственности
         String messageText = "ОСТАВЛЕН НОВЫЙ ОТЗЫВ!\n\n" + telegramObject.stringFrom() + ": \n\n" + text;
         sendMessageToAllAdmin(messageText);
     }
@@ -70,6 +76,12 @@ public class AdminMessageSender extends MessageSender {
      * @return the list of user IDs with the "admin" role
      */
     public List<Long> getAdministratorsIdList() {
+        // todo: ручная реализация кэширования, лучше использовать готовые решения
+        //  http://spring-projects.ru/guides/caching/
+        //  https://habr.com/ru/articles/465667/
+        //  Так же стоит предусмотреть возможность сбрасывания кэша по запросу от админов,
+        //  чтобы новый администратор мог начать работать с ботом в день добавления
+
         if (lastAdminListUpdateTime == null) {
             fetchAdminUserIds();
             log.debug("Admin list fetched for the first time");

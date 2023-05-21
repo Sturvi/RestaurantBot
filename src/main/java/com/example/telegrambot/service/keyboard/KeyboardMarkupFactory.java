@@ -20,6 +20,7 @@ public class KeyboardMarkupFactory {
      * @return a ReplyKeyboardMarkup object based on the specified keyboard type
      */
     public static ReplyKeyboardMarkup getReplyKeyboardMarkup(String keyboard) {
+        // todo: типы клавиатур лучше поместить в енам
         switch (keyboard) {
             case ("main") -> {
                 return getMainReplyKeyboardMarkup();
@@ -78,7 +79,7 @@ public class KeyboardMarkupFactory {
      *
      * @return a ReplyKeyboardMarkup object with a button to request the user's phone number
      */
-    private static ReplyKeyboardMarkup getPhoneRequestKeyboard(){
+    private static ReplyKeyboardMarkup getPhoneRequestKeyboard() {
         ReplyKeyboardMarkup replyKeyboardMarkup = creatKeyboard();
 
         List<KeyboardRow> keyboardRowList = new ArrayList<>();
@@ -102,7 +103,7 @@ public class KeyboardMarkupFactory {
      *
      * @return a new ReplyKeyboardMarkup object
      */
-    private static ReplyKeyboardMarkup creatKeyboard () {
+    private static ReplyKeyboardMarkup creatKeyboard() {
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
 
         replyKeyboardMarkup.setSelective(true);
@@ -118,7 +119,7 @@ public class KeyboardMarkupFactory {
      *
      * @param replyKeyboardMarkup the ReplyKeyboardMarkup object to add the cancel button to
      */
-    private static void addCancelButton (ReplyKeyboardMarkup replyKeyboardMarkup){
+    private static void addCancelButton(ReplyKeyboardMarkup replyKeyboardMarkup) {
         List<KeyboardRow> keyboardRowList = replyKeyboardMarkup.getKeyboard();
 
         KeyboardRow row = new KeyboardRow();

@@ -41,6 +41,9 @@ public class UserMessageSender extends MessageSender {
         getSendMessage().setReplyMarkup(KeyboardMarkupFactory.getReplyKeyboardMarkup(userStatus));
     }
 
+
+    // todo: не делай так, лучше просто удалить код.
+    //  Если понадобится - можно вытянуть из коммита с удалением
 /*    public void clean(TelegramObject telegramObject) {
         this.telegramObject = telegramObject;
         newSendMessage();

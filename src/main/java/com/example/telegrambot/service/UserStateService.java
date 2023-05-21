@@ -37,6 +37,7 @@ public class UserStateService {
             return newUserState;
         });
 
+        // todo: нарушение семантики. userStatus превращается в userState. Переименуй userStatus -> userState
         userState.setUserState(userStatus);
         userStateRepository.save(userState);
         log.debug("User state for chat ID: {} successfully updated to {}", chatId, userStatus);
