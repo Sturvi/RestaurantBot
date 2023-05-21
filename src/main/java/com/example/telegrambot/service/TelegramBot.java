@@ -12,6 +12,9 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ * This class represents the Telegram bot that listens for updates and handles them accordingly.
+ */
 @Component
 public class TelegramBot extends TelegramLongPollingBot  {
 
@@ -25,6 +28,12 @@ public class TelegramBot extends TelegramLongPollingBot  {
         this.executorService = Executors.newFixedThreadPool(10);
     }
 
+    /**
+     * This method is called whenever an update is received by the bot.
+     * It creates a new thread to handle the update and submits it to the executor service.
+     *
+     * @param update The update received by the bot.
+     */
     @Override
     @Transactional
     public void onUpdateReceived(Update update) {
@@ -40,6 +49,11 @@ public class TelegramBot extends TelegramLongPollingBot  {
         executorService.submit(newUserRequest);
     }
 
+    /**
+     * This method returns the username of the bot.
+     *
+     * @return The username of the bot.
+     */
     @Override
     public String getBotUsername() {
         return "dafghrhsfjhfjytBOT";

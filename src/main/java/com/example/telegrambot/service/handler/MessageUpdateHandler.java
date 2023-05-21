@@ -4,14 +4,12 @@ import com.example.telegrambot.TelegramObject;
 import com.example.telegrambot.model.Review;
 import com.example.telegrambot.model.UserInDataBase;
 import com.example.telegrambot.model.UserPhoneNumber;
-import com.example.telegrambot.model.UserState;
 import com.example.telegrambot.repository.UserPhoneNumberRepository;
 import com.example.telegrambot.repository.UserRepository;
-import com.example.telegrambot.repository.UserStateRepository;
 import com.example.telegrambot.service.UserStateService;
-import com.example.telegrambot.service.messageSenders.AdminMessageSender;
+import com.example.telegrambot.service.messagesenders.AdminMessageSender;
 import com.example.telegrambot.service.ReviewService;
-import com.example.telegrambot.service.messageSenders.UserMessageSender;
+import com.example.telegrambot.service.messagesenders.UserMessageSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
@@ -19,6 +17,11 @@ import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
+/**
+ * Component responsible for handling message updates in a Telegram Bot context.
+ * This component is annotated as a prototype scoped bean, meaning a new instance is created every time it is needed.
+ * It implements the Handler interface.
+ */
 @Component
 @Scope("prototype")
 @Slf4j
@@ -32,6 +35,11 @@ public class MessageUpdateHandler implements Handler {
     private final UserRepository userRepository;
     private final ReviewService reviewService;
 
+    /**
+     * Main method to handle incoming Telegram objects.
+     *
+     * @param telegramObject The incoming Telegram object to be handled.
+     */
     @Override
     public void handle(TelegramObject telegramObject) {
         this.telegramObject = telegramObject;
@@ -41,13 +49,16 @@ public class MessageUpdateHandler implements Handler {
 
         String userStatus = userStateService.getUserStatus(telegramObject.getId());
 
-        if (Boolean.TRUE.equals(telegramObject.isContact()) && userStatus.equals("messageToAdminNONUMBER") ) {
+        if (Boolean.TRUE.equals(telegramObject.isContact()) && userStatus.equals("messageToAdminNONUMBER")) {
             handlingContact();
         } else {
             handlingTextMessage();
         }
     }
 
+    /**
+     * Handles the situation when the user sends a contact update.
+     */
     private void handlingContact() {
         log.debug("Handling contact with phone number: {}, chat ID: {}", telegramObject.getPhoneNumber(), telegramObject.getId());
 
@@ -70,7 +81,7 @@ public class MessageUpdateHandler implements Handler {
     }
 
     /**
-     * Обрабатывает текстовые сообщения от пользователя и выполняет соответствующие действия.
+     * Handles incoming text messages, performs corresponding actions based on the message text.
      */
     private void handlingTextMessage() {
         log.debug("Handling text message");
@@ -107,6 +118,9 @@ public class MessageUpdateHandler implements Handler {
         }
     }
 
+    /**
+     * Prepares a message for the admin based on the user's current state.
+     */
     private void messageForAdmin() {
         String messageText = "Здесь Вы можете написать сообщение Управляющему! " +
                 "Это может быть благодарность, отзыв, предложение, замечание, претензия и другое.";
@@ -123,8 +137,11 @@ public class MessageUpdateHandler implements Handler {
 
     }
 
+    /**
+     * Creates a review based on the user's text message and sends it to the admin.
+     */
     private void addReview() {
-        Optional<UserInDataBase> userInDataBase = userRepository.findById(telegramObject.getId());
+        Optional<UserInDataBase> userInDataBase = userRepository.findByChatId(telegramObject.getId());
 
         if (userInDataBase.isPresent()) {
             Review review = reviewService.createReview(userInDataBase.get(), telegramObject.getText());

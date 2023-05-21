@@ -7,9 +7,18 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class KeyboardMarkupFactory {
 
+    private KeyboardMarkupFactory() {
+        throw new IllegalStateException("Utility class");
+    }
+
+    /**
+     * Returns a ReplyKeyboardMarkup object based on the specified keyboard type.
+     *
+     * @param keyboard the type of keyboard to create
+     * @return a ReplyKeyboardMarkup object based on the specified keyboard type
+     */
     public static ReplyKeyboardMarkup getReplyKeyboardMarkup(String keyboard) {
         switch (keyboard) {
             case ("main") -> {
@@ -27,25 +36,35 @@ public class KeyboardMarkupFactory {
         }
     }
 
+    /**
+     * Returns a ReplyKeyboardMarkup object with the main keyboard layout.
+     *
+     * @return a ReplyKeyboardMarkup object with the main keyboard layout
+     */
     private static ReplyKeyboardMarkup getMainReplyKeyboardMarkup() {
         ReplyKeyboardMarkup replyKeyboardMarkup = creatKeyboard();
 
         List<KeyboardRow> keyboardRowList = new ArrayList<>();
 
-        // Добавление кнопок в первую строку
+        // Add buttons to the first row
         keyboardRowList.add(new KeyboardRow());
         keyboardRowList.get(0).add(new KeyboardButton("\uD83D\uDCDD Оставить отзыв"));
 
-        // Добавление кнопок во вторую строку
+        // Add buttons to the second row
         keyboardRowList.add(new KeyboardRow());
         keyboardRowList.get(1).add(new KeyboardButton("\uD83D\uDCAC Написать администратору"));
 
-        // Установка списка строк с кнопками для клавиатуры
+        // Set the list of rows with buttons for the keyboard
         replyKeyboardMarkup.setKeyboard(keyboardRowList);
 
         return replyKeyboardMarkup;
     }
 
+    /**
+     * Returns a ReplyKeyboardMarkup object with a cancel button.
+     *
+     * @return a ReplyKeyboardMarkup object with a cancel button
+     */
     private static ReplyKeyboardMarkup getCancelKeyboard() {
         ReplyKeyboardMarkup replyKeyboardMarkup = creatKeyboard();
 
@@ -54,11 +73,16 @@ public class KeyboardMarkupFactory {
         return replyKeyboardMarkup;
     }
 
+    /**
+     * Returns a ReplyKeyboardMarkup object with a button to request the user's phone number.
+     *
+     * @return a ReplyKeyboardMarkup object with a button to request the user's phone number
+     */
     private static ReplyKeyboardMarkup getPhoneRequestKeyboard(){
         ReplyKeyboardMarkup replyKeyboardMarkup = creatKeyboard();
 
         List<KeyboardRow> keyboardRowList = new ArrayList<>();
-        // Создайте кнопку запроса номера телефона
+        // Create a button to request the phone number
         KeyboardButton requestPhoneNumber = new KeyboardButton("\uD83D\uDCF1 Поделиться номером телефона");
         requestPhoneNumber.setRequestContact(true);
 
@@ -73,6 +97,11 @@ public class KeyboardMarkupFactory {
         return replyKeyboardMarkup;
     }
 
+    /**
+     * Creates a new ReplyKeyboardMarkup object.
+     *
+     * @return a new ReplyKeyboardMarkup object
+     */
     private static ReplyKeyboardMarkup creatKeyboard () {
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
 
@@ -84,6 +113,11 @@ public class KeyboardMarkupFactory {
         return replyKeyboardMarkup;
     }
 
+    /**
+     * Adds a cancel button to the specified ReplyKeyboardMarkup object.
+     *
+     * @param replyKeyboardMarkup the ReplyKeyboardMarkup object to add the cancel button to
+     */
     private static void addCancelButton (ReplyKeyboardMarkup replyKeyboardMarkup){
         List<KeyboardRow> keyboardRowList = replyKeyboardMarkup.getKeyboard();
 
@@ -92,6 +126,5 @@ public class KeyboardMarkupFactory {
         keyboardRowList.add(row);
 
         replyKeyboardMarkup.setKeyboard(keyboardRowList);
-
     }
 }

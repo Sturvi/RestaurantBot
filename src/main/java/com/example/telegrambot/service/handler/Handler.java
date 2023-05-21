@@ -4,5 +4,5 @@ import com.example.telegrambot.TelegramObject;
 
 interface Handler {
 
-    public void handle(TelegramObject telegramObject);
+    void handle(TelegramObject telegramObject);
 }

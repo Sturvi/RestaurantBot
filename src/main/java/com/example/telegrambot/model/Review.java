@@ -18,7 +18,7 @@ public class Review extends TimestampedEntity {
 
     @ManyToOne
     @NotNull
-    @JoinColumn(name = "chat_id", referencedColumnName = "id")
+    @JoinColumn(name = "chat_id", referencedColumnName = "chat_id")
     private UserInDataBase user;
 
     @Column(name = "message", nullable = false)
