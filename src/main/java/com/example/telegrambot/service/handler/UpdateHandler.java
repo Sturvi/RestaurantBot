@@ -4,7 +4,6 @@ import com.example.telegrambot.TelegramObject;
 import com.example.telegrambot.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -20,8 +19,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class UpdateHandler implements Handler{
 
-    private final ApplicationContext applicationContext;
     private final UserService userService;
+    private final MessageUpdateHandler messageUpdateHandler;
 
 
     /**
@@ -32,11 +31,11 @@ public class UpdateHandler implements Handler{
      */
     @Override
     public void handle(TelegramObject telegramObject) {
-        userService.updateUserInfo(telegramObject.getFrom());
+        userService.saveOrUpdateUser(telegramObject.getFrom());
 
         try {
-            if (Boolean.TRUE.equals(telegramObject.isMessage())) {
-                applicationContext.getBean(MessageUpdateHandler.class).handle(telegramObject);
+            if (telegramObject.isMessage()) {
+                messageUpdateHandler.handle(telegramObject);
             } else if (Boolean.TRUE.equals(telegramObject.isCallbackQuery())) {
                 log.debug("Handling update for callback with data: {}, chat ID: {}", telegramObject.getData(), telegramObject.getId());
             }

@@ -1,7 +1,7 @@
 package com.example.telegrambot.service;
 
-import com.example.telegrambot.model.Review;
-import com.example.telegrambot.model.UserInDataBase;
+import com.example.telegrambot.model.ReviewEntity;
+import com.example.telegrambot.model.UserEntity;
 import com.example.telegrambot.repository.ReviewRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,16 +24,16 @@ public class ReviewService {
      * @param message the message of the review
      * @return the saved review
      */
-    public Review createReview(UserInDataBase user, String message) {
+    public ReviewEntity createReview(UserEntity user, String message) {
         log.debug("Creating new review from user: {}", user);
-        Review review = Review.builder()
+        ReviewEntity reviewEntity = ReviewEntity.builder()
                 .user(user)
                 .message(message)
                 .build();
 
-        Review savedReview = reviewRepository.save(review);
-        log.debug("Review successfully saved: {}", savedReview);
+        ReviewEntity savedReviewEntity = reviewRepository.save(reviewEntity);
+        log.debug("Review successfully saved: {}", savedReviewEntity);
 
-        return savedReview;
+        return savedReviewEntity;
     }
 }

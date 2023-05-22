@@ -1,21 +1,24 @@
 package com.example.telegrambot.service.handler;
 
 import com.example.telegrambot.TelegramObject;
-import com.example.telegrambot.model.Review;
-import com.example.telegrambot.model.UserInDataBase;
-import com.example.telegrambot.model.UserPhoneNumber;
+import com.example.telegrambot.model.UserPhoneNumberEntity;
+import com.example.telegrambot.model.UserStateEnum;
 import com.example.telegrambot.repository.UserPhoneNumberRepository;
 import com.example.telegrambot.repository.UserRepository;
-import com.example.telegrambot.service.UserStateService;
-import com.example.telegrambot.service.messagesenders.AdminMessageSender;
 import com.example.telegrambot.service.ReviewService;
+import com.example.telegrambot.service.UserStateService;
+import com.example.telegrambot.service.eventhandlers.CustomerEventHandler;
+import com.example.telegrambot.service.messagesenders.AdminMessageSender;
 import com.example.telegrambot.service.messagesenders.UserMessageSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  * Component responsible for handling message updates in a Telegram Bot context.
@@ -27,13 +30,24 @@ import java.util.Optional;
 @Slf4j
 @RequiredArgsConstructor
 public class MessageUpdateHandler implements Handler {
-    private TelegramObject telegramObject;
+
     private final UserStateService userStateService;
     private final UserPhoneNumberRepository userPhoneNumberRepository;
-    private UserMessageSender userMessageSender;
     private final AdminMessageSender adminMessageSender;
     private final UserRepository userRepository;
     private final ReviewService reviewService;
+    private final UserMessageSender userMessageSender;
+    private final CustomerEventHandler customerEventHandler;
+
+    private final Map<String, Consumer<TelegramObject>> messageHandlers = new HashMap<>();
+
+    private void init(TelegramObject telegramObject) {
+        messageHandlers.put("/start", this::handleStart);
+        messageHandlers.put("\uD83D\uDCDD Оставить отзыв", this::handleReview);
+        messageHandlers.put("⛔ Отмена", this::handleCancel);
+        messageHandlers.put("\uD83D\uDCAC Написать администратору", this::handleMessageToAdmin);
+        userMessageSender.setTelegramObject(telegramObject);
+    }
 
     /**
      * Main method to handle incoming Telegram objects.
@@ -42,78 +56,90 @@ public class MessageUpdateHandler implements Handler {
      */
     @Override
     public void handle(TelegramObject telegramObject) {
-        this.telegramObject = telegramObject;
-        userMessageSender = new UserMessageSender(telegramObject, userStateService);
+        init(telegramObject);
 
         log.debug("Handling update for message with text: {}, chat ID: {}", telegramObject.getText(), telegramObject.getId());
 
-        String userStatus = userStateService.getUserStatus(telegramObject.getId());
+        UserStateEnum userState = userStateService.getUserStatus(telegramObject.getId());
 
-        if (Boolean.TRUE.equals(telegramObject.isContact()) && userStatus.equals("messageToAdminNONUMBER")) {
-            handlingContact();
+        if (Boolean.TRUE.equals(telegramObject.isContact()) && userState == UserStateEnum.REQUEST_PHONE_NUMBER) {
+            handlingContact(telegramObject);
         } else {
-            handlingTextMessage();
+            handlingTextMessage(telegramObject);
         }
     }
 
     /**
      * Handles the situation when the user sends a contact update.
      */
-    private void handlingContact() {
+    private void handlingContact(TelegramObject telegramObject) {
         log.debug("Handling contact with phone number: {}, chat ID: {}", telegramObject.getPhoneNumber(), telegramObject.getId());
 
-        UserPhoneNumber newUserPhoneNumber = userPhoneNumberRepository.findByChatId(telegramObject.getId())
-                .map(existingUserPhoneNumber -> {
-                    existingUserPhoneNumber.setPhoneNumber(telegramObject.getPhoneNumber());
-                    return existingUserPhoneNumber;
+        UserPhoneNumberEntity newUserPhoneNumberEntity = mapToUserPhoneNumberEntity(telegramObject);
+
+        userPhoneNumberRepository.save(newUserPhoneNumberEntity);
+
+        userStateService.changeUserState(UserStateEnum.MESSAGE_TO_ADMIN, telegramObject);
+
+        userMessageSender.sendMessage("Теперь можете прислать ваше сообщение.");
+    }
+
+
+    private UserPhoneNumberEntity mapToUserPhoneNumberEntity(TelegramObject telegramObject) {
+        return userPhoneNumberRepository.findByChatId(telegramObject.getId())
+                .map(existingUserPhoneNumberEntity -> {
+                    existingUserPhoneNumberEntity.setPhoneNumber(telegramObject.getPhoneNumber());
+                    return existingUserPhoneNumberEntity;
                 })
-                .orElseGet(() -> UserPhoneNumber
+                .orElseGet(() -> UserPhoneNumberEntity
                         .builder()
                         .chatId(telegramObject.getId())
                         .phoneNumber(telegramObject.getPhoneNumber())
                         .build());
-
-        userPhoneNumberRepository.save(newUserPhoneNumber);
-
-        userStateService.changeUserState("messageToAdmin", telegramObject);
-
-        userMessageSender.sendMessage("Теперь можете прислать ваше сообщение.");
     }
 
     /**
      * Handles incoming text messages, performs corresponding actions based on the message text.
      */
-    private void handlingTextMessage() {
+    private void handlingTextMessage(TelegramObject telegramObject) {
         log.debug("Handling text message");
 
-        switch (telegramObject.getText()) {
-            case ("/start") -> {
-                userStateService.changeUserState("main", telegramObject);
-                userMessageSender.sendMessage("Добро пожаловать в наш бот");
-                log.debug("User started the bot");
-            }
-            case ("\uD83D\uDCDD Оставить отзыв") -> {
-                userStateService.changeUserState("review", telegramObject);
-                userMessageSender.sendMessage("Пришлите ваш отзыв в виде сообщения");
-                log.debug("User requested to leave a review");
-            }
-            case ("⛔ Отмена") -> {
-                userStateService.changeUserState("main", telegramObject);
-                userMessageSender.sendMessage("Вернулись в главное меню");
-                log.debug("User requested to leave a main");
-            }
-            case ("\uD83D\uDCAC Написать администратору") -> {
-                userStateService.changeUserState("messageToAdmin", telegramObject);
-                messageForAdmin();
-            }
-            default -> {
-                String userStatus = userStateService.getUserStatus(telegramObject.getId());
+        Consumer<TelegramObject> handler = messageHandlers.getOrDefault(telegramObject.getText(), this::handleDefault);
+        handler.accept(telegramObject);
+    }
 
-                switch (userStatus) {
-                    case ("review") -> {
-                        addReview();
-                    }
-                }
+    private void handleStart(TelegramObject telegramObject) {
+        userStateService.changeUserState(UserStateEnum.MAIN, telegramObject);
+        userMessageSender.sendMessage("Добро пожаловать в наш бот");
+        log.debug("User started the bot");
+    }
+
+    private void handleReview(TelegramObject telegramObject) {
+        userStateService.changeUserState(UserStateEnum.REVIEW, telegramObject);
+        userMessageSender.sendMessage("Пришлите ваш отзыв в виде сообщения");
+        log.debug("User requested to leave a review");
+    }
+
+    private void handleCancel(TelegramObject telegramObject) {
+        userStateService.changeUserState(UserStateEnum.MAIN, telegramObject);
+        userMessageSender.sendMessage("Вернулись в главное меню");
+        log.debug("User requested to leave a main");
+    }
+
+    private void handleMessageToAdmin(TelegramObject telegramObject) {
+        userStateService.changeUserState(UserStateEnum.MESSAGE_TO_ADMIN, telegramObject);
+        messageForAdmin(telegramObject);
+    }
+
+    private void handleDefault(TelegramObject telegramObject) {
+        UserStateEnum userState = userStateService.getUserStatus(telegramObject.getId());
+
+        switch (userState) {
+            case REVIEW -> customerEventHandler.handleNewCustomerReview(telegramObject);
+            case REQUEST_PHONE_NUMBER -> userMessageSender.sendMessage("Для того, чтобы отправить сообщение администратору " +
+                    "пришлите пожалуйста нам свой номер телефона прожав кнопку ниже.");
+            case MESSAGE_TO_ADMIN -> {
+
             }
         }
     }
@@ -121,40 +147,19 @@ public class MessageUpdateHandler implements Handler {
     /**
      * Prepares a message for the admin based on the user's current state.
      */
-    private void messageForAdmin() {
+    private void messageForAdmin(TelegramObject telegramObject) {
         String messageText = "Здесь Вы можете написать сообщение Управляющему! " +
                 "Это может быть благодарность, отзыв, предложение, замечание, претензия и другое.";
 
-        Optional<UserPhoneNumber> userPhoneNumber = userPhoneNumberRepository.findByChatId(telegramObject.getId());
+        Optional<UserPhoneNumberEntity> userPhoneNumber = userPhoneNumberRepository.findByChatId(telegramObject.getId());
 
         if (userPhoneNumber.isEmpty()) {
-            userStateService.changeUserState("messageToAdminNONUMBER", telegramObject);
+            userStateService.changeUserState(UserStateEnum.REQUEST_PHONE_NUMBER, telegramObject);
 
             messageText += "\n\nНо для начала пришлите пожалуйста нам свой номер телефона прожав кнопку ниже.";
         }
 
         userMessageSender.sendMessage(messageText);
 
-    }
-
-    /**
-     * Creates a review based on the user's text message and sends it to the admin.
-     */
-    private void addReview() {
-        Optional<UserInDataBase> userInDataBase = userRepository.findByChatId(telegramObject.getId());
-
-        if (userInDataBase.isPresent()) {
-            Review review = reviewService.createReview(userInDataBase.get(), telegramObject.getText());
-
-            userStateService.changeUserState("main", telegramObject);
-            userMessageSender.sendMessage("Спасибо за ваш отзыв");
-
-            adminMessageSender.sendMessageToAllAdmin(telegramObject.getText(), telegramObject);
-
-            log.debug("Review added: {}", review);
-        } else {
-            log.error("Failed to add review because user with id {} account was not found in the database", telegramObject.getId());
-            userMessageSender.sendMessage("Произошла ошибка во время отправки отзыва. Пожалуйста, попробуйте позже.");
-        }
     }
 }

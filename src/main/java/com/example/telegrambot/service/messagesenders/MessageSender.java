@@ -2,18 +2,23 @@ package com.example.telegrambot.service.messagesenders;
 
 import com.example.telegrambot.service.TelegramBot;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 @Slf4j
+@Component
+@Scope("prototype")
 public abstract class MessageSender {
+    private final TelegramBot telegramBot;
     private SendMessage sendMessage;
 
-    /**
-     * Initializes a new instance of the MessageSender class and initializes the SendMessage object.
-     */
-    protected MessageSender() {
+    @Autowired
+    protected MessageSender(TelegramBot telegramBot) {
+        this.telegramBot = telegramBot;
         this.sendMessage = new SendMessage();
     }
 
@@ -55,7 +60,7 @@ public abstract class MessageSender {
 
         Message message = null;
         try {
-            message = new TelegramBot().execute(sendMessage);
+            message = telegramBot.execute(sendMessage);
             log.debug("Successfully sent message to chat ID: {}, with message ID: {}", message.getChatId(), message.getMessageId());
         } catch (TelegramApiException e) {
             log.debug("Error sending message to user: {}", e.getMessage());

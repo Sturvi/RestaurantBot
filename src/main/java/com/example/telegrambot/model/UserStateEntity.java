@@ -7,17 +7,16 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "users_phone_number")
+@Table(name = "user_state")
 @Data
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@SuperBuilder
-public class UserPhoneNumber extends TimestampedEntity{
-
+public class UserStateEntity extends TimestampedEntity {
     @Column(name = "chat_id", unique = true)
     private Long chatId;
 
-    @Column(name = "phone_number")
-    private String phoneNumber;
-
+    @Enumerated(EnumType.STRING)
+    @Column(name = "user_state")
+    private UserStateEnum userStateEnum;
 }

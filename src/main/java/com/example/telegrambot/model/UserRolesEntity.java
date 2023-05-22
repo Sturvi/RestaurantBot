@@ -7,15 +7,17 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "user_state")
+@Table(name = "users_role")
 @Data
-@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserState extends TimestampedEntity {
+@SuperBuilder
+public class UserRolesEntity extends TimestampedEntity {
+
     @Column(name = "chat_id", unique = true)
     private Long chatId;
 
-    @Column(name = "user_state")
-    private String userState;
+    @Column(name = "role")
+    private String role;
+
 }
