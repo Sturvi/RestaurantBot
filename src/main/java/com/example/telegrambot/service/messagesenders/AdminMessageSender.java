@@ -1,6 +1,5 @@
 package com.example.telegrambot.service.messagesenders;
 
-import com.example.telegrambot.TelegramObject;
 import com.example.telegrambot.model.UserRolesEntity;
 import com.example.telegrambot.repository.UserRolesRepository;
 import com.example.telegrambot.service.TelegramBot;
@@ -43,23 +42,6 @@ public class AdminMessageSender extends MessageSender {
     }
 
     /**
-     * Sends a message with the specified text and TelegramObject to all administrators.
-     *
-     * @param text           the text of the message
-     * @param telegramObject the TelegramObject containing the chat ID
-     */
-    public void sendMessageToAllAdmin(String text, TelegramObject telegramObject) {
-        // todo: имя метода говорит об отправке сообщения всем админам без указания типа сообщения,
-        //  а на деле мы отправляем админам уведомление о новом отзыве.
-        //  Класс отвечает за отправку сообщений, а тут получается ещё какое-то событие обрабатывается.
-        //  Обработку события с новым отзывом лучше вынести в отдельный класс (CustomerEventHandler например)
-        //  и текст сообщения генерировать в нём, вызывать отправку сообщения с заданным текстом у класса AdminMessageSender.
-        //  Иначе выходит нарушение единой ответственности
-        String messageText = "ОСТАВЛЕН НОВЫЙ ОТЗЫВ!\n\n" + telegramObject.stringFrom() + ": \n\n" + text;
-        sendMessageToAllAdmin(messageText);
-    }
-
-    /**
      * Fetches the list of user IDs with the "admin" role from the repository.
      */
     private void fetchAdminUserIds() {
@@ -80,11 +62,6 @@ public class AdminMessageSender extends MessageSender {
      * @return the list of user IDs with the "admin" role
      */
     public List<Long> getAdministratorsIdList() {
-        // todo: ручная реализация кэширования, лучше использовать готовые решения
-        //  http://spring-projects.ru/guides/caching/
-        //  https://habr.com/ru/articles/465667/
-        //  Так же стоит предусмотреть возможность сбрасывания кэша по запросу от админов,
-        //  чтобы новый администратор мог начать работать с ботом в день добавления
 
         if (lastAdminListUpdateTime == null) {
             fetchAdminUserIds();
