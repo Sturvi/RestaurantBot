@@ -4,11 +4,8 @@ import com.example.telegrambot.TelegramObject;
 import com.example.telegrambot.model.UserPhoneNumberEntity;
 import com.example.telegrambot.model.UserStateEnum;
 import com.example.telegrambot.repository.UserPhoneNumberRepository;
-import com.example.telegrambot.repository.UserRepository;
-import com.example.telegrambot.service.ReviewService;
-import com.example.telegrambot.service.UserStateService;
+import com.example.telegrambot.service.UserService;
 import com.example.telegrambot.service.eventhandlers.CustomerEventHandler;
-import com.example.telegrambot.service.messagesenders.AdminMessageSender;
 import com.example.telegrambot.service.messagesenders.UserMessageSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,11 +28,8 @@ import java.util.function.Consumer;
 @RequiredArgsConstructor
 public class MessageUpdateHandler implements Handler {
 
-    private final UserStateService userStateService;
+    private final UserService userService;
     private final UserPhoneNumberRepository userPhoneNumberRepository;
-    private final AdminMessageSender adminMessageSender;
-    private final UserRepository userRepository;
-    private final ReviewService reviewService;
     private final UserMessageSender userMessageSender;
     private final CustomerEventHandler customerEventHandler;
 
@@ -60,7 +54,7 @@ public class MessageUpdateHandler implements Handler {
 
         log.debug("Handling update for message with text: {}, chat ID: {}", telegramObject.getText(), telegramObject.getId());
 
-        UserStateEnum userState = userStateService.getUserStatus(telegramObject.getId());
+        UserStateEnum userState = userService.getUserStatus(telegramObject);
 
         if (Boolean.TRUE.equals(telegramObject.isContact()) && userState == UserStateEnum.REQUEST_PHONE_NUMBER) {
             handlingContact(telegramObject);
@@ -79,7 +73,7 @@ public class MessageUpdateHandler implements Handler {
 
         userPhoneNumberRepository.save(newUserPhoneNumberEntity);
 
-        userStateService.changeUserState(UserStateEnum.MESSAGE_TO_ADMIN, telegramObject);
+        userService.changeUserState(UserStateEnum.MESSAGE_TO_ADMIN, telegramObject);
 
         userMessageSender.sendMessage("Теперь можете прислать ваше сообщение.");
     }
@@ -109,30 +103,30 @@ public class MessageUpdateHandler implements Handler {
     }
 
     private void handleStart(TelegramObject telegramObject) {
-        userStateService.changeUserState(UserStateEnum.MAIN, telegramObject);
+        userService.changeUserState(UserStateEnum.MAIN, telegramObject);
         userMessageSender.sendMessage("Добро пожаловать в наш бот");
         log.debug("User started the bot");
     }
 
     private void handleReview(TelegramObject telegramObject) {
-        userStateService.changeUserState(UserStateEnum.REVIEW, telegramObject);
+        userService.changeUserState(UserStateEnum.REVIEW, telegramObject);
         userMessageSender.sendMessage("Пришлите ваш отзыв в виде сообщения");
         log.debug("User requested to leave a review");
     }
 
     private void handleCancel(TelegramObject telegramObject) {
-        userStateService.changeUserState(UserStateEnum.MAIN, telegramObject);
+        userService.changeUserState(UserStateEnum.MAIN, telegramObject);
         userMessageSender.sendMessage("Вернулись в главное меню");
         log.debug("User requested to leave a main");
     }
 
     private void handleMessageToAdmin(TelegramObject telegramObject) {
-        userStateService.changeUserState(UserStateEnum.MESSAGE_TO_ADMIN, telegramObject);
+        userService.changeUserState(UserStateEnum.MESSAGE_TO_ADMIN, telegramObject);
         messageForAdmin(telegramObject);
     }
 
     private void handleDefault(TelegramObject telegramObject) {
-        UserStateEnum userState = userStateService.getUserStatus(telegramObject.getId());
+        UserStateEnum userState = userService.getUserStatus(telegramObject);
 
         switch (userState) {
             case REVIEW -> customerEventHandler.handleNewCustomerReview(telegramObject);
@@ -154,7 +148,7 @@ public class MessageUpdateHandler implements Handler {
         Optional<UserPhoneNumberEntity> userPhoneNumber = userPhoneNumberRepository.findByChatId(telegramObject.getId());
 
         if (userPhoneNumber.isEmpty()) {
-            userStateService.changeUserState(UserStateEnum.REQUEST_PHONE_NUMBER, telegramObject);
+            userService.changeUserState(UserStateEnum.REQUEST_PHONE_NUMBER, telegramObject);
 
             messageText += "\n\nНо для начала пришлите пожалуйста нам свой номер телефона прожав кнопку ниже.";
         }

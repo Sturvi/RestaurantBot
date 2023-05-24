@@ -1,7 +1,8 @@
 package com.example.telegrambot.service.messagesenders;
 
-import com.example.telegrambot.model.UserRolesEntity;
-import com.example.telegrambot.repository.UserRolesRepository;
+import com.example.telegrambot.model.UserEntity;
+import com.example.telegrambot.model.UserRoleEnum;
+import com.example.telegrambot.repository.UserRepository;
 import com.example.telegrambot.service.TelegramBot;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,14 +18,14 @@ public class AdminMessageSender extends MessageSender {
 
     private List<Long> administratorsIdList;
 
-    private final UserRolesRepository userRolesRepository;
+    private final UserRepository userRepository;
 
     private LocalDateTime lastAdminListUpdateTime;
 
     @Autowired
-    public AdminMessageSender(TelegramBot telegramBot, UserRolesRepository userRolesRepository) {
+    public AdminMessageSender(TelegramBot telegramBot, UserRepository userRepository) {
         super(telegramBot);
-        this.userRolesRepository = userRolesRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -45,10 +46,10 @@ public class AdminMessageSender extends MessageSender {
      * Fetches the list of user IDs with the "admin" role from the repository.
      */
     private void fetchAdminUserIds() {
-        List<UserRolesEntity> adminRoles = userRolesRepository.findAllByRole("admin");
+        List<UserEntity> adminRoles = userRepository.findAllByRole(UserRoleEnum.ADMIN);
 
         administratorsIdList = adminRoles.stream()
-                .map(UserRolesEntity::getChatId)
+                .map(UserEntity::getChatId)
                 .toList();
 
         lastAdminListUpdateTime = LocalDateTime.now();

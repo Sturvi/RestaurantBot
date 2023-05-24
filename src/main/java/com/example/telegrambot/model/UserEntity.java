@@ -30,4 +30,12 @@ public class UserEntity extends TimestampedEntity{
     @Column(name = "user_status")
     private boolean userStatus;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "user_state", columnDefinition = "varchar(255) default 'MAIN'")
+    private UserStateEnum userStateEnum;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", columnDefinition = "varchar(255) default 'USER'")
+    private UserRoleEnum role;
+
 }

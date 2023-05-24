@@ -6,7 +6,7 @@ import com.example.telegrambot.model.UserEntity;
 import com.example.telegrambot.model.UserStateEnum;
 import com.example.telegrambot.repository.UserRepository;
 import com.example.telegrambot.service.ReviewService;
-import com.example.telegrambot.service.UserStateService;
+import com.example.telegrambot.service.UserService;
 import com.example.telegrambot.service.messagesenders.AdminMessageSender;
 import com.example.telegrambot.service.messagesenders.UserMessageSender;
 import lombok.AllArgsConstructor;
@@ -23,7 +23,7 @@ public class CustomerEventHandler {
     private final AdminMessageSender adminMessageSender;
     private final UserRepository userRepository;
     private final ReviewService reviewService;
-    private final UserStateService userStateService;
+    private final UserService userService;
     private final UserMessageSender userMessageSender;
 
     /**
@@ -32,12 +32,13 @@ public class CustomerEventHandler {
      * @param telegramObjectWishNewReview the TelegramObject containing information about the new review
      */
     public void handleNewCustomerReview(TelegramObject telegramObjectWishNewReview) {
+        userMessageSender.setTelegramObject(telegramObjectWishNewReview);
         Optional<UserEntity> userInDataBase = userRepository.findByChatId(telegramObjectWishNewReview.getId());
 
         if (userInDataBase.isPresent()) {
             ReviewEntity reviewEntity = reviewService.createReview(userInDataBase.get(), telegramObjectWishNewReview.getText());
 
-            userStateService.changeUserState(UserStateEnum.MAIN, telegramObjectWishNewReview.getId());
+            userService.changeUserState(UserStateEnum.MAIN, telegramObjectWishNewReview);
             userMessageSender.sendMessage("Спасибо за ваш отзыв");
 
             sendNewReviewNotificationToAdmins(telegramObjectWishNewReview);

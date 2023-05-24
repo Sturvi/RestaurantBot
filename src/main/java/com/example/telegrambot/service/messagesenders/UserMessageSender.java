@@ -3,7 +3,7 @@ package com.example.telegrambot.service.messagesenders;
 import com.example.telegrambot.TelegramObject;
 import com.example.telegrambot.model.UserStateEnum;
 import com.example.telegrambot.service.TelegramBot;
-import com.example.telegrambot.service.UserStateService;
+import com.example.telegrambot.service.UserService;
 import com.example.telegrambot.service.keyboard.KeyboardMarkupFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,12 +19,12 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 @Scope("prototype")
 public class UserMessageSender extends MessageSender {
     private TelegramObject telegramObject;
-    private final UserStateService userStateService;
+    private final UserService userService;
 
     @Autowired
-    public UserMessageSender(TelegramBot telegramBot, UserStateService userStateService) {
+    public UserMessageSender(TelegramBot telegramBot, UserService userService) {
         super(telegramBot);
-        this.userStateService = userStateService;
+        this.userService = userService;
     }
 
     /**
@@ -43,7 +43,7 @@ public class UserMessageSender extends MessageSender {
      * Sets the reply keyboard markup according to the user's status.
      */
     private void setReplyKeyboardMarkupByUserStatus() {
-        UserStateEnum userState = userStateService.getUserStatus(telegramObject.getId());
+        UserStateEnum userState = userService.getUserStatus(telegramObject);
 
         log.debug("Setting ReplyKeyboardMarkup for user status: {}", userState);
         getSendMessage().setReplyMarkup(KeyboardMarkupFactory.getReplyKeyboardMarkup(userState));
