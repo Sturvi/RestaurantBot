@@ -1,4 +1,4 @@
-package com.example.telegrambot.service.eventhandlers;
+package com.example.telegrambot.service.handler.eventhandlers;
 
 import com.example.telegrambot.TelegramObject;
 import com.example.telegrambot.model.ReviewEntity;
@@ -56,7 +56,7 @@ public class CustomerEventHandler {
      */
     private void sendNewReviewNotificationToAdmins(TelegramObject telegramObjectWishNewReview) {
         String messageText = "ОСТАВЛЕН НОВЫЙ ОТЗЫВ!\n\n" + telegramObjectWishNewReview.stringFrom() + ": \n\n" + telegramObjectWishNewReview.getText();
-        adminMessageSender.sendMessageToAllAdmin(messageText);
+        adminMessageSender.prepareAndSendAdminMessage(messageText);
         log.debug("Sent new customer review notification to all admins");
     }
 

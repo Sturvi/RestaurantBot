@@ -103,10 +103,14 @@ public class UserService {
      * @return The user state.
      */
     public UserStateEnum getUserStatus(TelegramObject telegramObject) {
-        UserEntity userEntity = userRepository
-                .findByChatId(telegramObject.getId())
-                .orElseGet(() -> userMapper.mapNewUserToUserEntity(telegramObject.getFrom()));
+        UserEntity userEntity = getUserEntityFromDataBase(telegramObject);
 
         return userEntity.getUserStateEnum();
+    }
+
+    public UserEntity getUserEntityFromDataBase (TelegramObject telegramObject) {
+        return userRepository
+                .findByChatId(telegramObject.getId())
+                .orElseGet(() -> userMapper.mapNewUserToUserEntity(telegramObject.getFrom()));
     }
 }

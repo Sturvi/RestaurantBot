@@ -1,82 +1,57 @@
 package com.example.telegrambot.service.messagesenders;
 
-import com.example.telegrambot.model.UserEntity;
-import com.example.telegrambot.model.UserRoleEnum;
-import com.example.telegrambot.repository.UserRepository;
+import com.example.telegrambot.service.AdministratorList;
 import com.example.telegrambot.service.TelegramBot;
+import com.example.telegrambot.service.keyboard.InlineKeyboardMarkupFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.List;
-
 @Component
+@Scope("prototype")
 @Slf4j
 public class AdminMessageSender extends MessageSender {
 
-    private List<Long> administratorsIdList;
+    private final AdministratorList administratorList;
 
-    private final UserRepository userRepository;
-
-    private LocalDateTime lastAdminListUpdateTime;
 
     @Autowired
-    public AdminMessageSender(TelegramBot telegramBot, UserRepository userRepository) {
+    public AdminMessageSender(TelegramBot telegramBot, AdministratorList administratorList) {
         super(telegramBot);
-        this.userRepository = userRepository;
+        log.debug("AdminMessageSender initialized with TelegramBot and AdministratorList");
+        this.administratorList = administratorList;
     }
 
-    /**
-     * Sends a message with the specified text to all administrators.
-     *
-     * @param messageText the text of the message
-     */
-    public void sendMessageToAllAdmin(String messageText) {
-        for (Long adminId : getAdministratorsIdList()) {
-            newSendMessage();
+    public void prepareAndSendAdminMessage(String messageText) {
+        log.debug("Preparing and sending admin message with text: {}", messageText);
+        setText(messageText);
+
+        deliverMessageToAdmins();
+    }
+
+    public void prepareAndSendChatMessageToAllAdmins(String messageText){
+        log.debug("Preparing and sending chat message to all admins with text: {}", messageText);
+        var keyboard = InlineKeyboardMarkupFactory.getAdminInlineKeyboardForMessages();
+        log.debug("Inline keyboard markup for admins created");
+
+        getSendMessage().setReplyMarkup(keyboard);
+        log.debug("Reply markup set for SendMessage");
+
+        setText(messageText);
+        log.debug("Message text set");
+
+        deliverMessageToAdmins();
+    }
+
+    private void deliverMessageToAdmins() {
+        for (Long adminId : administratorList.getAdministratorsIdList()) {
+            log.debug("Processing admin with chat ID: {}", adminId);
             getSendMessage().setChatId(adminId);
-            sendMessage(messageText);
+            log.debug("Chat ID set for SendMessage");
+
+            executeMessage();
             log.debug("Sent message to admin with chat ID: {}", adminId);
         }
-    }
-
-    /**
-     * Fetches the list of user IDs with the "admin" role from the repository.
-     */
-    private void fetchAdminUserIds() {
-        List<UserEntity> adminRoles = userRepository.findAllByRole(UserRoleEnum.ADMIN);
-
-        administratorsIdList = adminRoles.stream()
-                .map(UserEntity::getChatId)
-                .toList();
-
-        lastAdminListUpdateTime = LocalDateTime.now();
-        log.debug("Admin user IDs fetched and list updated");
-    }
-
-    /**
-     * Returns the list of user IDs with the "admin" role. If an hour or more has passed since the last update,
-     * updates the list of administrators.
-     *
-     * @return the list of user IDs with the "admin" role
-     */
-    public List<Long> getAdministratorsIdList() {
-
-        if (lastAdminListUpdateTime == null) {
-            fetchAdminUserIds();
-            log.debug("Admin list fetched for the first time");
-            return administratorsIdList;
-        }
-
-        Duration duration = Duration.between(lastAdminListUpdateTime, LocalDateTime.now());
-
-        if (duration.toHours() > 0) {
-            fetchAdminUserIds();
-            log.debug("Admin list updated due to time duration");
-        }
-
-        return administratorsIdList;
     }
 }

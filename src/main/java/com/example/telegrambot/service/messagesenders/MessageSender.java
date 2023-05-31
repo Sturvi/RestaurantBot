@@ -47,12 +47,16 @@ public abstract class MessageSender {
         return executeMessage();
     }
 
+    protected void setText (String text) {
+        sendMessage.setText(text);
+    }
+
     /**
      * Sends the message using the Telegram Bot API.
      *
      * @return the message that was sent
      */
-    private Message executeMessage() {
+    protected Message executeMessage() {
         sendMessage.enableMarkdown(true);
         sendMessage.enableHtml(true);
 
@@ -73,7 +77,7 @@ public abstract class MessageSender {
     /**
      * Creates a new SendMessage object.
      */
-    protected void newSendMessage() {
+    protected synchronized void newSendMessage() {
         sendMessage = new SendMessage();
     }
 
@@ -82,7 +86,7 @@ public abstract class MessageSender {
      *
      * @return the current SendMessage object
      */
-    protected SendMessage getSendMessage() {
+    protected synchronized SendMessage getSendMessage() {
         return sendMessage;
     }
 }

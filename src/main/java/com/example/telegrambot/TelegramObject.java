@@ -19,6 +19,7 @@ public class TelegramObject {
     private Integer messageId;
     private String text;
     private String data;
+    private String userName;
     private User from;
     private Contact contact;
     private String phoneNumber;
@@ -111,6 +112,15 @@ public class TelegramObject {
     }
 
     /**
+     * Returns the userName.
+     *
+     * @return the text
+     */
+    public String getUserName() {
+        return userName;
+    }
+
+    /**
      * Returns the data of the callback query.
      *
      * @return the data
@@ -176,6 +186,7 @@ public class TelegramObject {
      */
     private void initMessageObject(Message message) {
         id = message.getChatId();
+        userName = message.getFrom().getUserName();
         messageId = message.getMessageId();
         text = message.getText();
         data = null;
@@ -194,6 +205,7 @@ public class TelegramObject {
      */
     private void initCallbackQueryObject(CallbackQuery callbackQuery) {
         id = callbackQuery.getFrom().getId();
+        userName = callbackQuery.getFrom().getUserName();
         messageId = callbackQuery.getMessage().getMessageId();
         text = callbackQuery.getMessage().getText();
         data = callbackQuery.getData();

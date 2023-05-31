@@ -5,7 +5,8 @@ import com.example.telegrambot.model.UserPhoneNumberEntity;
 import com.example.telegrambot.model.UserStateEnum;
 import com.example.telegrambot.repository.UserPhoneNumberRepository;
 import com.example.telegrambot.service.UserService;
-import com.example.telegrambot.service.eventhandlers.CustomerEventHandler;
+import com.example.telegrambot.service.handler.eventhandlers.ChatEventHandler;
+import com.example.telegrambot.service.handler.eventhandlers.CustomerEventHandler;
 import com.example.telegrambot.service.messagesenders.UserMessageSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +33,7 @@ public class MessageUpdateHandler implements Handler {
     private final UserPhoneNumberRepository userPhoneNumberRepository;
     private final UserMessageSender userMessageSender;
     private final CustomerEventHandler customerEventHandler;
+    private final ChatEventHandler chatEventHandler;
 
     private final Map<String, Consumer<TelegramObject>> messageHandlers = new HashMap<>();
 
@@ -130,11 +132,17 @@ public class MessageUpdateHandler implements Handler {
 
         switch (userState) {
             case REVIEW -> customerEventHandler.handleNewCustomerReview(telegramObject);
-            case REQUEST_PHONE_NUMBER -> userMessageSender.sendMessage("Для того, чтобы отправить сообщение администратору " +
-                    "пришлите пожалуйста нам свой номер телефона прожав кнопку ниже.");
+            case REQUEST_PHONE_NUMBER ->
+                    userMessageSender.sendMessage("Для того, чтобы отправить сообщение администратору " +
+                            "пришлите пожалуйста нам свой номер телефона прожав кнопку ниже.");
             case MESSAGE_TO_ADMIN -> {
-
+                chatEventHandler.handle(telegramObject);
+                userService.changeUserState(UserStateEnum.MAIN, telegramObject);
+                userMessageSender.sendMessage("Ваше сообщение принято. Администрация ответит вам в кратчайшие сроки");
             }
+            default ->
+                    userMessageSender.sendMessage("Что-то пошло не так, пожалуйста сообщите об ошибке аккаунту @Sturvi");
+
         }
     }
 

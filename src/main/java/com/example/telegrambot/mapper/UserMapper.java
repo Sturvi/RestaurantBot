@@ -31,4 +31,5 @@ public class UserMapper {
     public void updateUserState (UserEntity userEntity, UserStateEnum userStateEnum) {
         userEntity.setUserStateEnum(userStateEnum);
     }
+
 }

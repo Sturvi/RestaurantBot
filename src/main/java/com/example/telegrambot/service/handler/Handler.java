@@ -2,7 +2,7 @@ package com.example.telegrambot.service.handler;
 
 import com.example.telegrambot.TelegramObject;
 
-interface Handler {
+public interface Handler {
 
     void handle(TelegramObject telegramObject);
 }
