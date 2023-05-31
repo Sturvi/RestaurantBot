@@ -56,7 +56,7 @@ public class MessageUpdateHandler implements Handler {
 
         log.debug("Handling update for message with text: {}, chat ID: {}", telegramObject.getText(), telegramObject.getId());
 
-        UserStateEnum userState = userService.getUserStatus(telegramObject);
+        UserStateEnum userState = userService.getUserState(telegramObject);
 
         if (Boolean.TRUE.equals(telegramObject.isContact()) && userState == UserStateEnum.REQUEST_PHONE_NUMBER) {
             handlingContact(telegramObject);
@@ -128,7 +128,7 @@ public class MessageUpdateHandler implements Handler {
     }
 
     private void handleDefault(TelegramObject telegramObject) {
-        UserStateEnum userState = userService.getUserStatus(telegramObject);
+        UserStateEnum userState = userService.getUserState(telegramObject);
 
         switch (userState) {
             case REVIEW -> customerEventHandler.handleNewCustomerReview(telegramObject);

@@ -3,6 +3,7 @@ package com.example.telegrambot.service;
 import com.example.telegrambot.TelegramObject;
 import com.example.telegrambot.mapper.UserMapper;
 import com.example.telegrambot.model.UserEntity;
+import com.example.telegrambot.model.UserRoleEnum;
 import com.example.telegrambot.model.UserStateEnum;
 import com.example.telegrambot.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -102,10 +103,16 @@ public class UserService {
      * @param telegramObject An instance of TelegramObject containing information about the user.
      * @return The user state.
      */
-    public UserStateEnum getUserStatus(TelegramObject telegramObject) {
+    public UserStateEnum getUserState(TelegramObject telegramObject) {
         UserEntity userEntity = getUserEntityFromDataBase(telegramObject);
 
         return userEntity.getUserStateEnum();
+    }
+
+    public UserRoleEnum getUserRole (TelegramObject telegramObject) {
+        UserEntity userEntity = getUserEntityFromDataBase(telegramObject);
+
+        return userEntity.getRole();
     }
 
     public UserEntity getUserEntityFromDataBase (TelegramObject telegramObject) {

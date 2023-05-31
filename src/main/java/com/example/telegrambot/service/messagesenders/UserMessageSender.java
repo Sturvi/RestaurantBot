@@ -43,7 +43,7 @@ public class UserMessageSender extends MessageSender {
      * Sets the reply keyboard markup according to the user's status.
      */
     private void setReplyKeyboardMarkupByUserStatus() {
-        UserStateEnum userState = userService.getUserStatus(telegramObject);
+        UserStateEnum userState = userService.getUserState(telegramObject);
 
         log.debug("Setting ReplyKeyboardMarkup for user status: {}", userState);
         getSendMessage().setReplyMarkup(KeyboardMarkupFactory.getReplyKeyboardMarkup(userState));

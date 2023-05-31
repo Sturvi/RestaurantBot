@@ -21,6 +21,7 @@ public class UpdateHandler implements Handler{
 
     private final UserService userService;
     private final MessageUpdateHandler messageUpdateHandler;
+    private final CallbackQueryHandler callbackQueryHandler;
 
 
     /**
@@ -36,8 +37,9 @@ public class UpdateHandler implements Handler{
         try {
             if (telegramObject.isMessage()) {
                 messageUpdateHandler.handle(telegramObject);
-            } else if (Boolean.TRUE.equals(telegramObject.isCallbackQuery())) {
+            } else if (telegramObject.isCallbackQuery()) {
                 log.debug("Handling update for callback with data: {}, chat ID: {}", telegramObject.getData(), telegramObject.getId());
+                callbackQueryHandler.handle(telegramObject);
             }
         } catch (Exception e) {
             log.error("An error occurred while handling the Telegram object", e);
