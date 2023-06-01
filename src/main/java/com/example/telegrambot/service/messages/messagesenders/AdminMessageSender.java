@@ -1,4 +1,4 @@
-package com.example.telegrambot.service.messagesenders;
+package com.example.telegrambot.service.messages.messagesenders;
 
 import com.example.telegrambot.service.AdministratorList;
 import com.example.telegrambot.service.TelegramBot;

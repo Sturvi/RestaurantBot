@@ -6,7 +6,7 @@ import com.example.telegrambot.repository.ChatWithAdministratorRepository;
 import com.example.telegrambot.service.AdministratorList;
 import com.example.telegrambot.service.Operation;
 import com.example.telegrambot.service.handler.Handler;
-import com.example.telegrambot.service.messagesenders.AdminMessageSender;
+import com.example.telegrambot.service.messages.messagesenders.AdminMessageSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;

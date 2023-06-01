@@ -1,4 +1,4 @@
-package com.example.telegrambot.service.messagesenders;
+package com.example.telegrambot.service.messages.messagesenders;
 
 import com.example.telegrambot.TelegramObject;
 import com.example.telegrambot.model.UserStateEnum;

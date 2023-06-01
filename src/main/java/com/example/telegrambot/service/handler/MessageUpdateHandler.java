@@ -7,7 +7,7 @@ import com.example.telegrambot.repository.UserPhoneNumberRepository;
 import com.example.telegrambot.service.UserService;
 import com.example.telegrambot.service.handler.eventhandlers.ChatEventHandler;
 import com.example.telegrambot.service.handler.eventhandlers.CustomerEventHandler;
-import com.example.telegrambot.service.messagesenders.UserMessageSender;
+import com.example.telegrambot.service.messages.messagesenders.UserMessageSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;

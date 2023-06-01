@@ -20,16 +20,16 @@ public class ChatWithAdministratorEntity extends TimestampedEntity {
 
     @ManyToOne
     @NotNull
-    @JoinColumn(name = "user_id", referencedColumnName = "chat_id")
-    private UserEntity userId;
+    @JoinColumn(name = "user", referencedColumnName = "chat_id")
+    private UserEntity user;
 
     @Column(name = "messageText", nullable = false)
     @NotNull
     private String message;
 
     @ManyToOne
-    @JoinColumn(name = "admin_id", referencedColumnName = "chat_id")
-    private UserEntity adminId;
+    @JoinColumn(name = "admin", referencedColumnName = "chat_id")
+    private UserEntity admin;
 
     @Enumerated(EnumType.STRING)
     @NotNull

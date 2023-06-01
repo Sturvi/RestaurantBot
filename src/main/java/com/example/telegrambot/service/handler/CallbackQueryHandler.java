@@ -24,6 +24,7 @@ public class CallbackQueryHandler implements Handler {
     private void init (TelegramObject telegramObject) {
         this.telegramObject = telegramObject;
         callbackHandlers.put("reply", callbackQueryHandler);
+        callbackHandlers.put("history", callbackQueryHandler);
     }
 
     @Override

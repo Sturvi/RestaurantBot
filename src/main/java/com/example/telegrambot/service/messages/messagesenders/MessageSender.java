@@ -1,4 +1,4 @@
-package com.example.telegrambot.service.messagesenders;
+package com.example.telegrambot.service.messages.messagesenders;
 
 import com.example.telegrambot.service.TelegramBot;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +13,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 @Component
 @Scope("prototype")
 public abstract class MessageSender {
-    private final TelegramBot telegramBot;
+    private TelegramBot telegramBot;
     private SendMessage sendMessage;
 
     @Autowired
