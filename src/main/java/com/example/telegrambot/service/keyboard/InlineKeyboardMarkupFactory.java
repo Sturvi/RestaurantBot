@@ -7,32 +7,81 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Abstract factory class for creating InlineKeyboardMarkup objects.
+ */
 @Slf4j
-public class InlineKeyboardMarkupFactory {
+public abstract class InlineKeyboardMarkupFactory {
 
-    private InlineKeyboardMarkupFactory() {
-        throw new IllegalStateException("Utility class");
-    }
-
-    public static InlineKeyboardMarkup getAdminInlineKeyboardForMessages() {
+    /**
+     * Creates a new InlineKeyboardMarkup object with an empty keyboard.
+     *
+     * @return new InlineKeyboardMarkup object.
+     */
+    protected static InlineKeyboardMarkup creatNewInlineKeyboard() {
+        log.debug("Creating new empty InlineKeyboardMarkup");
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
-
-        keyboard.add(new ArrayList<>());
-        keyboard.add(new ArrayList<>());
-
-        InlineKeyboardButton messagesHistory = new InlineKeyboardButton("\uD83D\uDCDA\uD83D\uDCAC Предыдущие сообщения");
-        messagesHistory.setCallbackData("history");
-        keyboard.get(0).add(messagesHistory);
-
-        InlineKeyboardButton reply = new InlineKeyboardButton("✉️ Ответить");
-        reply.setCallbackData("reply");
-        keyboard.get(1).add(reply);
 
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         inlineKeyboardMarkup.setKeyboard(keyboard);
 
-        log.debug("Created admin inline keyboard for messages");
-
         return inlineKeyboardMarkup;
+    }
+
+    /**
+     * Adds a button to a new line in the given InlineKeyboardMarkup object.
+     *
+     * @param inlineKeyboardMarkup InlineKeyboardMarkup object to add the button to.
+     * @param text Text to display on the button.
+     * @param data Callback data associated with the button.
+     */
+    protected static void addButtonToNewLine(InlineKeyboardMarkup inlineKeyboardMarkup, String text, String data) {
+        log.debug("Adding button to new line: text={}, data={}", text, data);
+        var keyboardRoad = getNewKeyboardRoad(inlineKeyboardMarkup);
+
+        InlineKeyboardButton button = new InlineKeyboardButton(text);
+        button.setCallbackData(data);
+        keyboardRoad.add(button);
+    }
+
+    /**
+     * Adds a button to the current line in the given InlineKeyboardMarkup object.
+     *
+     * @param inlineKeyboardMarkup InlineKeyboardMarkup object to add the button to.
+     * @param text Text to display on the button.
+     * @param data Callback data associated with the button.
+     */
+    protected static void addButtonToCurrentLine(InlineKeyboardMarkup inlineKeyboardMarkup, String text, String data) {
+        log.debug("Adding button to current line: text={}, data={}", text, data);
+        var keyboardRoad = getCurrentKeyboardRoad(inlineKeyboardMarkup);
+
+        InlineKeyboardButton button = new InlineKeyboardButton(text);
+        button.setCallbackData(data);
+        keyboardRoad.add(button);
+    }
+
+    /**
+     * Gets a new keyboard row for the given InlineKeyboardMarkup object.
+     *
+     * @param inlineKeyboardMarkup InlineKeyboardMarkup object to get the new row for.
+     * @return new keyboard row.
+     */
+    private static List<InlineKeyboardButton> getNewKeyboardRoad(InlineKeyboardMarkup inlineKeyboardMarkup) {
+        log.debug("Getting new keyboard row");
+        List<InlineKeyboardButton> keyboardRoad = new ArrayList<>();
+        inlineKeyboardMarkup.getKeyboard().add(keyboardRoad);
+        return keyboardRoad;
+    }
+
+    /**
+     * Gets the current keyboard row for the given InlineKeyboardMarkup object.
+     *
+     * @param inlineKeyboardMarkup InlineKeyboardMarkup object to get the current row for.
+     * @return current keyboard row.
+     */
+    private static List<InlineKeyboardButton> getCurrentKeyboardRoad(InlineKeyboardMarkup inlineKeyboardMarkup) {
+        log.debug("Getting current keyboard row");
+        var keyboard = inlineKeyboardMarkup.getKeyboard();
+        return keyboard.get(keyboard.size() - 1);
     }
 }

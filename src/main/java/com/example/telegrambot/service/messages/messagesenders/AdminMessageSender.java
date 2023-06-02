@@ -2,7 +2,7 @@ package com.example.telegrambot.service.messages.messagesenders;
 
 import com.example.telegrambot.service.AdministratorList;
 import com.example.telegrambot.service.TelegramBot;
-import com.example.telegrambot.service.keyboard.InlineKeyboardMarkupFactory;
+import com.example.telegrambot.service.keyboard.AdminInlineKeyboardMarkupFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -32,7 +32,7 @@ public class AdminMessageSender extends MessageSender {
 
     public void prepareAndSendChatMessageToAllAdmins(String messageText){
         log.debug("Preparing and sending chat message to all admins with text: {}", messageText);
-        var keyboard = InlineKeyboardMarkupFactory.getAdminInlineKeyboardForMessages();
+        var keyboard = AdminInlineKeyboardMarkupFactory.getInlineKeyboardForMessagesWithAdmin();
         log.debug("Inline keyboard markup for admins created");
 
         getSendMessage().setReplyMarkup(keyboard);

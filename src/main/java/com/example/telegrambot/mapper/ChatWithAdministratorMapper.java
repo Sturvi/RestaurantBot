@@ -16,7 +16,7 @@ public class ChatWithAdministratorMapper {
 
     public ChatWithAdministratorEntity newMessageFromUserToAdmin(TelegramObject telegramObject) {
         return ChatWithAdministratorEntity.builder()
-                .userId(userService.getUserEntityFromDataBase(telegramObject))
+                .user(userService.getUserEntityFromDataBase(telegramObject))
                 .message(telegramObject.getText())
                 .senderRole(UserRoleEnum.USER)
                 .build();
@@ -24,9 +24,9 @@ public class ChatWithAdministratorMapper {
 
     public ChatWithAdministratorEntity newMessageFromAdminToUser(TelegramObject telegramObject, UserEntity user) {
         return ChatWithAdministratorEntity.builder()
-                .userId(user)
+                .user(user)
                 .message(telegramObject.getText())
-                .adminId(userService.getUserEntityFromDataBase(telegramObject))
+                .admin(userService.getUserEntityFromDataBase(telegramObject))
                 .senderRole(UserRoleEnum.ADMIN)
                 .build();
     }

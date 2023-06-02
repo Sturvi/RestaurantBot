@@ -48,6 +48,7 @@ public class ChatEventCallbackQueryHandler implements Handler {
         log.debug("Initializing ChatEventCallbackQueryHandler with TelegramObject: {}", telegramObject);
 
         callbackHandle.put("reply", this::handleReply);
+        callbackHandle.put("history", this::handleHistory);
     }
 
     @Override
