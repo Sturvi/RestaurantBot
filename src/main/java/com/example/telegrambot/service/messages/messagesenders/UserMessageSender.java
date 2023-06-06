@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
 /**
  * This class is responsible for sending messages via the Telegram Bot API.
@@ -39,11 +40,33 @@ public class UserMessageSender extends MessageSender {
         return super.sendMessage(text);
     }
 
+    public Message sendMessageWithChatId (Long chatId, String messageText) {
+        getSendMessage().setChatId(chatId);
+
+        var userState = userService.getUserState(chatId);
+        setReplyKeyboardMarkupByUserStatus(userState);
+
+        return super.sendMessage(messageText);
+    }
+
+    public Message sendMessageWithChatIdAndInlineKeyboard (Long chatId, String messageText, InlineKeyboardMarkup inlineKeyboardMarkup){
+        getSendMessage().setChatId(chatId);
+
+        getSendMessage().setReplyMarkup(inlineKeyboardMarkup);
+
+        return super.sendMessage(messageText);
+    }
+
     /**
      * Sets the reply keyboard markup according to the user's status.
      */
     private void setReplyKeyboardMarkupByUserStatus() {
         UserStateEnum userState = userService.getUserState(telegramObject);
+
+        setReplyKeyboardMarkupByUserStatus(userState);
+    }
+
+    private void setReplyKeyboardMarkupByUserStatus(UserStateEnum userState) {
 
         log.debug("Setting ReplyKeyboardMarkup for user status: {}", userState);
         getSendMessage().setReplyMarkup(KeyboardMarkupFactory.getReplyKeyboardMarkup(userState));

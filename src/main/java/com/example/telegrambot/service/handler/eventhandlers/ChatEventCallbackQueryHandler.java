@@ -1,6 +1,7 @@
 package com.example.telegrambot.service.handler.eventhandlers;
 
 import com.example.telegrambot.TelegramObject;
+import com.example.telegrambot.mapper.TempChatIdMapper;
 import com.example.telegrambot.model.ChatWithAdministratorEntity;
 import com.example.telegrambot.model.UserEntity;
 import com.example.telegrambot.model.UserRoleEnum;
@@ -11,6 +12,7 @@ import com.example.telegrambot.service.Operation;
 import com.example.telegrambot.service.UserService;
 import com.example.telegrambot.service.exceptions.ChatIdNotFoundException;
 import com.example.telegrambot.service.handler.Handler;
+import com.example.telegrambot.service.messages.messagesenders.AdminMessageSender;
 import com.example.telegrambot.service.messages.messagesenders.UserMessageSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +36,8 @@ public class ChatEventCallbackQueryHandler implements Handler {
     private final UserMessageSender userMessageSender;
     private final ChatWithAdministratorRepository chatWithAdministratorRepository;
     private final AdministratorList administratorList;
+    private final AdminMessageSender adminMessageSender;
+    private final TempChatIdMapper tempChatIdMapper;
 
     private TelegramObject telegramObject;
     private final Map<String, Operation> callbackHandle = new HashMap<>();
@@ -67,30 +71,52 @@ public class ChatEventCallbackQueryHandler implements Handler {
 
     private void handleReply() {
         UserRoleEnum userRole = userService.getUserRole(telegramObject);
-
         log.debug("User role retrieved: {}", userRole);
-
         String messageText = "Можете отправить ваше сообщение.";
 
         if (userRole == UserRoleEnum.ADMIN) {
-            Optional<String> userInfo = extractInfoFromMessage(USER_INFO_PATTERN);
-
-            if (userInfo.isPresent()) {
-                userService.changeUserState(UserStateEnum.ANSWER_TO_MESSAGE_IN_CHAT, telegramObject);
-                messageText = userInfo.get() + "\n\n" + messageText;
-                userMessageSender.sendMessage(messageText);
-                log.debug("Admin reply sent: {}", messageText);
-            } else {
-                userMessageSender.sendMessage("Во время обработки команды произошла ошибка. " +
-                        "Пожалуйста обратитесь к разработчикам.");
-                log.warn("Failed to retrieve user info from message for admin reply");
-            }
+            handleAdminReply(messageText);
         } else {
-            userService.changeUserState(UserStateEnum.ANSWER_TO_MESSAGE_IN_CHAT, telegramObject);
-            userMessageSender.sendMessage(messageText);
-            log.debug("Reply sent: {}", messageText);
+            handleNonAdminReply(messageText);
         }
     }
+
+    private void handleAdminReply(String messageText) {
+        var userInfo = extractInfoFromMessage(USER_INFO_PATTERN);
+        var recipientChatIdOptional = extractInfoFromMessage(USER_ID_PATTERN);
+
+        if (userInfo.isPresent() && recipientChatIdOptional.isPresent()) {
+            userService.changeUserState(UserStateEnum.ANSWER_TO_MESSAGE_IN_CHAT, telegramObject);
+            var adminEntity = userService.getUserEntityFromDataBase(telegramObject);
+            var userEntityOpt = userService.getUserEntityFromDataBase(Long.parseLong(recipientChatIdOptional.get()));
+
+            if (userEntityOpt.isPresent()) {
+                tempChatIdMapper.addOrUpdateTempRecipientChatId(adminEntity, userEntityOpt.get());
+            } else {
+                sendErrorMessage();
+                log.warn("Failed to retrieve userEntity {} from Data base for admin reply", recipientChatIdOptional.get());
+            }
+
+            var userIndoString = userInfo.get().replace("Поступило новое сообщение от пользователя", "Пользователь");
+            messageText = userIndoString + "\n\n" + messageText;
+            adminMessageSender.sendMessageToAdmin(telegramObject.getId(), messageText);
+            log.debug("Admin reply sent: {}", messageText);
+        } else {
+            sendErrorMessage();
+            log.warn("Failed to retrieve user info from message for admin reply");
+        }
+    }
+
+    private void handleNonAdminReply(String messageText) {
+        userService.changeUserState(UserStateEnum.ANSWER_TO_MESSAGE_IN_CHAT, telegramObject);
+        userMessageSender.sendMessage(messageText);
+        log.debug("Reply sent: {}", messageText);
+    }
+
+    private void sendErrorMessage() {
+        userMessageSender.sendMessage("Во время обработки команды произошла ошибка. " + "Пожалуйста обратитесь к разработчикам.");
+    }
+
 
     private void handleHistory() {
         UserRoleEnum userRole = userService.getUserRole(telegramObject);
@@ -110,6 +136,8 @@ public class ChatEventCallbackQueryHandler implements Handler {
         var chatHistory = getChatHistory(ChatIdForSearchInDataBase);
 
         String chatHistoryString = convertChatHistoryListToString(chatHistory);
+
+        // todo: реализовать исправление сообщение
     }
 
     private Optional<String> extractInfoFromMessage(Pattern pattern) {
@@ -199,7 +227,7 @@ public class ChatEventCallbackQueryHandler implements Handler {
 
     private void appendAdminInfo(StringBuilder senderInfo, UserEntity admin) {
         senderInfo.append("Администратор ");
-        if (administratorList.hasAdmin(telegramObject.getId())){
+        if (administratorList.hasAdmin(telegramObject.getId())) {
             senderInfo.append(admin.getFirstName());
 
             if (admin.getLastName() != null) {

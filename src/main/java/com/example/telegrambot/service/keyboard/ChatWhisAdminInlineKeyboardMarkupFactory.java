@@ -7,9 +7,9 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
  * Factory class for creating InlineKeyboardMarkup objects for admin messages.
  */
 @Slf4j
-public class AdminInlineKeyboardMarkupFactory extends InlineKeyboardMarkupFactory {
+public class ChatWhisAdminInlineKeyboardMarkupFactory extends InlineKeyboardMarkupFactory {
 
-    private AdminInlineKeyboardMarkupFactory() {
+    private ChatWhisAdminInlineKeyboardMarkupFactory() {
         throw new IllegalStateException("Utility class");
     }
 

@@ -135,10 +135,9 @@ public class MessageUpdateHandler implements Handler {
             case REQUEST_PHONE_NUMBER ->
                     userMessageSender.sendMessage("Для того, чтобы отправить сообщение администратору " +
                             "пришлите пожалуйста нам свой номер телефона прожав кнопку ниже.");
-            case MESSAGE_TO_ADMIN -> {
+            case MESSAGE_TO_ADMIN, ANSWER_TO_MESSAGE_IN_CHAT -> {
                 chatEventHandler.handle(telegramObject);
                 userService.changeUserState(UserStateEnum.MAIN, telegramObject);
-                userMessageSender.sendMessage("Ваше сообщение принято. Администрация ответит вам в кратчайшие сроки");
             }
             default ->
                     userMessageSender.sendMessage("Что-то пошло не так, пожалуйста сообщите об ошибке аккаунту @Sturvi");

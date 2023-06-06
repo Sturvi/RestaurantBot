@@ -2,11 +2,16 @@ package com.example.telegrambot.service.handler.eventhandlers;
 
 import com.example.telegrambot.TelegramObject;
 import com.example.telegrambot.mapper.ChatWithAdministratorMapper;
+import com.example.telegrambot.model.UserStateEnum;
 import com.example.telegrambot.repository.ChatWithAdministratorRepository;
+import com.example.telegrambot.repository.TempChatIdRepository;
 import com.example.telegrambot.service.AdministratorList;
 import com.example.telegrambot.service.Operation;
+import com.example.telegrambot.service.UserService;
 import com.example.telegrambot.service.handler.Handler;
+import com.example.telegrambot.service.keyboard.ChatWhisAdminInlineKeyboardMarkupFactory;
 import com.example.telegrambot.service.messages.messagesenders.AdminMessageSender;
+import com.example.telegrambot.service.messages.messagesenders.UserMessageSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
@@ -25,12 +30,16 @@ public class ChatEventHandler implements Handler {
     private final ChatWithAdministratorMapper chatWithAdministratorMapper;
     private final ChatWithAdministratorRepository chatWithAdministratorRepository;
     private final AdminMessageSender adminMessageSender;
+    private final UserMessageSender userMessageSender;
+    private final UserService userService;
+    private final TempChatIdRepository tempChatIdRepository;
+
     private TelegramObject telegramObject;
     private final Map<String, Operation> callbackHandlers = new HashMap<>();
 
-    private void init (TelegramObject telegramObject) {
+    private void init(TelegramObject telegramObject) {
         this.telegramObject = telegramObject;
-
+        userMessageSender.setTelegramObject(telegramObject);
     }
 
     @Override
@@ -58,12 +67,36 @@ public class ChatEventHandler implements Handler {
 
         adminMessageSender.prepareAndSendChatMessageToAllAdmins(messageText);
         log.info("Prepared and sent message to all admins.");
+
+        userService.changeUserState(UserStateEnum.MAIN, telegramObject);
+        userMessageSender.sendMessage("Ваше сообщение отправлено администрации");
     }
 
+    /**
+     * Handles updates from an admin user.
+     */
     private void handlingUpdateFromAdmin() {
         log.debug("Handling message from admin.");
-        // TO-DO: Implement admin message handling
+
+        var adminUserEntity = userService.getUserEntityFromDataBase(telegramObject);
+        var recipientUserChatIdOpt = tempChatIdRepository.findByAdminEntity(adminUserEntity);
+
+        if (recipientUserChatIdOpt.isPresent()) {
+            var recipientUserChatId = recipientUserChatIdOpt.get().getRecipientUserEntity().getChatId();
+
+            var chatEntity = chatWithAdministratorMapper.newMessageFromAdminToUser(telegramObject, recipientUserChatIdOpt.get().getRecipientUserEntity());
+            chatWithAdministratorRepository.save(chatEntity);
+
+            userMessageSender.sendMessageWithChatIdAndInlineKeyboard(recipientUserChatId,
+                    telegramObject.getText(),
+                    ChatWhisAdminInlineKeyboardMarkupFactory.getInlineKeyboardForMessagesWithAdmin());
+
+            adminMessageSender.sendMessageToAdmin(telegramObject.getId(), "Сообщение отправлено");
+        } else {
+            log.error("Error: Recipient user chat ID not found.");
+        }
     }
+
 
     private String creatNewMessageToAdminText() {
         String firstName = telegramObject.getFrom().getFirstName();
@@ -79,9 +112,9 @@ public class ChatEventHandler implements Handler {
                 Поступило новое сообщение от пользователя: %s
                 Юзернейм пользователя: %s
                 Уникальный идентификатор пользователя: %d
-                
+                                
                 Текст сообщения:\s
-                
+                                
                 %s
                 """.formatted(firstAndLastName, telegramObject.getUserName(), telegramObject.getId(), telegramObject.getText());
 

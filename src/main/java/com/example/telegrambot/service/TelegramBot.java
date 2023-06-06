@@ -2,6 +2,7 @@ package com.example.telegrambot.service;
 
 import com.example.telegrambot.TelegramObject;
 import com.example.telegrambot.service.handler.UpdateHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -21,6 +22,7 @@ import java.util.function.Supplier;
  * This class represents the Telegram bot that listens for updates and handles them accordingly.
  */
 @Component
+@Slf4j
 public class TelegramBot extends TelegramLongPollingBot {
 
     private final String botUsername;
@@ -49,6 +51,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             UpdateHandler updateHandler = updateHandlerSupplier.get();
             updateHandler.handle(TelegramObject.getTelegramObject(update));
         } catch (Exception e) {
+            log.error(e.toString());
             e.printStackTrace(); // Вывод информации об исключении
         }
     }

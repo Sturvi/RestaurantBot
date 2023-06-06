@@ -13,6 +13,7 @@ import org.telegram.telegrambots.meta.api.objects.User;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -109,6 +110,16 @@ public class UserService {
         return userEntity.getUserStateEnum();
     }
 
+    public UserStateEnum getUserState(Long chatId) {
+        var userEntity = getUserEntityFromDataBase(chatId);
+
+        if (userEntity.isPresent()) {
+            return userEntity.get().getUserStateEnum();
+        } else {
+            return UserStateEnum.MAIN;
+        }
+    }
+
     public UserRoleEnum getUserRole (TelegramObject telegramObject) {
         UserEntity userEntity = getUserEntityFromDataBase(telegramObject);
 
@@ -119,5 +130,10 @@ public class UserService {
         return userRepository
                 .findByChatId(telegramObject.getId())
                 .orElseGet(() -> userMapper.mapNewUserToUserEntity(telegramObject.getFrom()));
+    }
+
+    public Optional<UserEntity> getUserEntityFromDataBase (Long chatId) {
+        return userRepository
+                .findByChatId(chatId);
     }
 }

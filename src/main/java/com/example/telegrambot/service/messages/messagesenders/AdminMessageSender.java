@@ -2,7 +2,7 @@ package com.example.telegrambot.service.messages.messagesenders;
 
 import com.example.telegrambot.service.AdministratorList;
 import com.example.telegrambot.service.TelegramBot;
-import com.example.telegrambot.service.keyboard.AdminInlineKeyboardMarkupFactory;
+import com.example.telegrambot.service.keyboard.ChatWhisAdminInlineKeyboardMarkupFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -32,7 +32,7 @@ public class AdminMessageSender extends MessageSender {
 
     public void prepareAndSendChatMessageToAllAdmins(String messageText){
         log.debug("Preparing and sending chat message to all admins with text: {}", messageText);
-        var keyboard = AdminInlineKeyboardMarkupFactory.getInlineKeyboardForMessagesWithAdmin();
+        var keyboard = ChatWhisAdminInlineKeyboardMarkupFactory.getInlineKeyboardForMessagesWithAdmin();
         log.debug("Inline keyboard markup for admins created");
 
         getSendMessage().setReplyMarkup(keyboard);
@@ -52,6 +52,18 @@ public class AdminMessageSender extends MessageSender {
 
             executeMessage();
             log.debug("Sent message to admin with chat ID: {}", adminId);
+        }
+    }
+
+    public void sendMessageToAdmin(Long adminChatId, String messageText) {
+        if (administratorList.hasAdmin(adminChatId)) {
+            getSendMessage().setChatId(adminChatId);
+
+            setText(messageText);
+
+            executeMessage();
+        } else {
+            log.error("Message to user {} and text \"{}\" was not delivered because this user is not an administrator.", adminChatId, messageText);
         }
     }
 }
