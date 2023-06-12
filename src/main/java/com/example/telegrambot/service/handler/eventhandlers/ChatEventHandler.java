@@ -65,7 +65,7 @@ public class ChatEventHandler implements Handler {
 
         var messageText = creatNewMessageToAdminText();
 
-        adminMessageSender.prepareAndSendChatMessageToAllAdmins(messageText);
+        adminMessageSender.prepareAndSendChatMessageToAllAdmins(messageText, telegramObject.getId());
         log.info("Prepared and sent message to all admins.");
 
         userService.changeUserState(UserStateEnum.MAIN, telegramObject);
@@ -89,7 +89,7 @@ public class ChatEventHandler implements Handler {
 
             userMessageSender.sendMessageWithChatIdAndInlineKeyboard(recipientUserChatId,
                     telegramObject.getText(),
-                    ChatWhisAdminInlineKeyboardMarkupFactory.getInlineKeyboardForMessagesWithAdmin());
+                    ChatWhisAdminInlineKeyboardMarkupFactory.getInlineKeyboardForMessagesWithAdmin(telegramObject.getId()));
 
             adminMessageSender.sendMessageToAdmin(telegramObject.getId(), "Сообщение отправлено");
         } else {

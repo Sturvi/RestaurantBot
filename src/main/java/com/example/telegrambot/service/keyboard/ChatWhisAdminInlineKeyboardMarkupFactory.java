@@ -19,21 +19,21 @@ public class ChatWhisAdminInlineKeyboardMarkupFactory extends InlineKeyboardMark
      *
      * @return InlineKeyboardMarkup object with buttons for viewing message history and replying to messages.
      */
-    public static InlineKeyboardMarkup getInlineKeyboardForMessagesWithAdmin() {
+    public static InlineKeyboardMarkup getInlineKeyboardForMessagesWithAdmin(Long chatId) {
         log.debug("Creating new InlineKeyboardMarkup for chat with admin messages");
         var inlineKeyboardMarkup = creatNewInlineKeyboard();
 
-        addButtonToNewLine(inlineKeyboardMarkup, "📚💬 Предыдущие сообщения", "history");
-        addButtonToNewLine(inlineKeyboardMarkup, "✉️ Ответить", "reply");
+        addButtonToNewLine(inlineKeyboardMarkup, "📚💬 Предыдущие сообщения", "history " + chatId);
+        addButtonToNewLine(inlineKeyboardMarkup, "✉️ Ответить", "reply " + chatId);
 
         return inlineKeyboardMarkup;
     }
 
-    public static InlineKeyboardMarkup getInlineKeyboardAfterPressHistoryButton() {
+    public static InlineKeyboardMarkup getInlineKeyboardAfterPressHistoryButton(Long chatId) {
         log.debug("Creating new InlineKeyboardMarkup for chat with admin messages after history button");
         var inlineKeyboardMarkup = creatNewInlineKeyboard();
 
-        addButtonToNewLine(inlineKeyboardMarkup, "✉️ Ответить", "reply");
+        addButtonToNewLine(inlineKeyboardMarkup, "✉️ Ответить", "reply " + chatId);
 
         return inlineKeyboardMarkup;
     }

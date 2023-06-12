@@ -12,6 +12,8 @@ import com.example.telegrambot.service.Operation;
 import com.example.telegrambot.service.UserService;
 import com.example.telegrambot.service.exceptions.ChatIdNotFoundException;
 import com.example.telegrambot.service.handler.Handler;
+import com.example.telegrambot.service.keyboard.ChatWhisAdminInlineKeyboardMarkupFactory;
+import com.example.telegrambot.service.messages.editmessagesender.EditMessageSender;
 import com.example.telegrambot.service.messages.messagesenders.AdminMessageSender;
 import com.example.telegrambot.service.messages.messagesenders.UserMessageSender;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +40,7 @@ public class ChatEventCallbackQueryHandler implements Handler {
     private final AdministratorList administratorList;
     private final AdminMessageSender adminMessageSender;
     private final TempChatIdMapper tempChatIdMapper;
+    private final EditMessageSender editMessageSender;
 
     private TelegramObject telegramObject;
     private final Map<String, Operation> callbackHandle = new HashMap<>();
@@ -59,7 +62,9 @@ public class ChatEventCallbackQueryHandler implements Handler {
     public void handle(TelegramObject telegramObject) {
         init(telegramObject);
 
-        Operation operation = callbackHandle.get(telegramObject.getData());
+        var dataCommand = telegramObject.getData().split(" ");
+
+        Operation operation = callbackHandle.get(dataCommand[0]);
 
         if (operation != null) {
             log.debug("Handling telegramObject with operation: {}", operation);
@@ -82,29 +87,28 @@ public class ChatEventCallbackQueryHandler implements Handler {
     }
 
     private void handleAdminReply(String messageText) {
-        var userInfo = extractInfoFromMessage(USER_INFO_PATTERN);
-        var recipientChatIdOptional = extractInfoFromMessage(USER_ID_PATTERN);
+        var dataSplitArray = telegramObject.getData().split(" ");
+        if (dataSplitArray.length == 1) {
+            sendErrorMessage();
+            throw new ChatIdNotFoundException();
+        }
 
-        if (userInfo.isPresent() && recipientChatIdOptional.isPresent()) {
-            userService.changeUserState(UserStateEnum.ANSWER_TO_MESSAGE_IN_CHAT, telegramObject);
-            var adminEntity = userService.getUserEntityFromDataBase(telegramObject);
-            var userEntityOpt = userService.getUserEntityFromDataBase(Long.parseLong(recipientChatIdOptional.get()));
+        var recipientChatId = Long.parseLong(dataSplitArray[1]);
 
-            if (userEntityOpt.isPresent()) {
-                tempChatIdMapper.addOrUpdateTempRecipientChatId(adminEntity, userEntityOpt.get());
-            } else {
-                sendErrorMessage();
-                log.warn("Failed to retrieve userEntity {} from Data base for admin reply", recipientChatIdOptional.get());
-            }
+        userService.changeUserState(UserStateEnum.ANSWER_TO_MESSAGE_IN_CHAT, telegramObject);
 
-            var userIndoString = userInfo.get().replace("Поступило новое сообщение от пользователя", "Пользователь");
-            messageText = userIndoString + "\n\n" + messageText;
-            adminMessageSender.sendMessageToAdmin(telegramObject.getId(), messageText);
-            log.debug("Admin reply sent: {}", messageText);
+        var adminEntity = userService.getUserEntityFromDataBase(telegramObject);
+        var userEntityOpt = userService.getUserEntityFromDataBase(recipientChatId);
+
+        if (userEntityOpt.isPresent()) {
+            tempChatIdMapper.addOrUpdateTempRecipientChatId(adminEntity, userEntityOpt.get());
         } else {
             sendErrorMessage();
-            log.warn("Failed to retrieve user info from message for admin reply");
+            log.warn("Failed to retrieve userEntity {} from Data base for admin reply", recipientChatId);
         }
+
+        adminMessageSender.sendMessageToAdmin(telegramObject.getId(), messageText);
+        log.debug("Admin reply sent: {}", messageText);
     }
 
     private void handleNonAdminReply(String messageText) {
@@ -137,7 +141,21 @@ public class ChatEventCallbackQueryHandler implements Handler {
 
         String chatHistoryString = convertChatHistoryListToString(chatHistory);
 
-        // todo: реализовать исправление сообщение
+        var recipientChatIdArray = telegramObject.getData().split(" ");
+
+        if (recipientChatIdArray.length == 1) {
+            throw new ChatIdNotFoundException();
+        }
+
+        var recipientChatId = Long.parseLong(recipientChatIdArray[1]);
+
+        var keyboard = ChatWhisAdminInlineKeyboardMarkupFactory.getInlineKeyboardAfterPressHistoryButton(recipientChatId);
+
+        editMessageSender.addInlineKeyboardAndEditMessage(
+                chatHistoryString,
+                telegramObject.getMessageId(),
+                telegramObject.getId(),
+                keyboard);
     }
 
     private Optional<String> extractInfoFromMessage(Pattern pattern) {
@@ -186,7 +204,7 @@ public class ChatEventCallbackQueryHandler implements Handler {
             var senderInfo = getSenderInfo(chatEntity);
 
             if (messageLengthIsValid(chatHistoryStringBuilder, senderInfo)) {
-                chatHistoryStringBuilder.insert(0, senderInfo);
+                chatHistoryStringBuilder.insert(0, senderInfo + "\n\n");
             } else {
                 log.debug("Chat history message length exceeded limit. Truncating history.");
                 break;

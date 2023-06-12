@@ -31,7 +31,9 @@ public class CallbackQueryHandler implements Handler {
     public void handle(TelegramObject telegramObject) {
         init(telegramObject);
 
-        var handler = callbackHandlers.get(telegramObject.getData());
+        var dataCommand = telegramObject.getData().split(" ");
+
+        var handler = callbackHandlers.get(dataCommand[0]);
 
         if (handler != null) {
             handler.handle(telegramObject);

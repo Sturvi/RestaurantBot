@@ -6,32 +6,40 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 @Slf4j
 @Component
 @Scope("prototype")
-public abstract class EditMessageSender {
+public class EditMessageSender {
     private final TelegramBot telegramBot;
     private EditMessageText editMessageText;
 
     @Autowired
-    protected EditMessageSender(TelegramBot telegramBot) {
+    public EditMessageSender(TelegramBot telegramBot) {
         this.telegramBot = telegramBot;
         this.editMessageText = new EditMessageText();
     }
 
-    protected void editMessage(String text, Integer messageId, Long chatId) {
-        editMessageText.setMessageId(messageId);
-        editMessageText.setChatId(String.valueOf(chatId));
-        editMessage(text);
+    public void editMessage(String text, Integer messageId, Long chatId) {
+        prepareEditMessageText(text, messageId, chatId);
+
+        executeEditMessage();
     }
 
-    protected void editMessage(String text) {
-        editMessageText.setText(text);
+    public void addInlineKeyboardAndEditMessage(String text, Integer messageId, Long chatId, InlineKeyboardMarkup inlineKeyboardMarkup) {
+        prepareEditMessageText(text, messageId, chatId);
 
-        log.debug("Preparing to edit message with chat ID: {}, text: {}", editMessageText.getChatId(), editMessageText.getText());
+        editMessageText.setReplyMarkup(inlineKeyboardMarkup);
+
         executeEditMessage();
+    }
+
+    public void prepareEditMessageText(String text, Integer messageId, Long chatId) {
+        editMessageText.setMessageId(messageId);
+        editMessageText.setChatId(String.valueOf(chatId));
+        editMessageText.setText(text);
     }
 
     protected void setText(String text) {
@@ -62,11 +70,11 @@ public abstract class EditMessageSender {
 
     }
 
-    protected synchronized void newEditMessageText() {
+    protected void newEditMessageText() {
         editMessageText = new EditMessageText();
     }
 
-    protected synchronized EditMessageText getEditMessageText() {
+    protected EditMessageText getEditMessageText() {
         return editMessageText;
     }
 }

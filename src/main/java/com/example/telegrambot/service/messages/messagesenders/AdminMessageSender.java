@@ -30,9 +30,9 @@ public class AdminMessageSender extends MessageSender {
         deliverMessageToAdmins();
     }
 
-    public void prepareAndSendChatMessageToAllAdmins(String messageText){
+    public void prepareAndSendChatMessageToAllAdmins(String messageText, Long chatId){
         log.debug("Preparing and sending chat message to all admins with text: {}", messageText);
-        var keyboard = ChatWhisAdminInlineKeyboardMarkupFactory.getInlineKeyboardForMessagesWithAdmin();
+        var keyboard = ChatWhisAdminInlineKeyboardMarkupFactory.getInlineKeyboardForMessagesWithAdmin(chatId);
         log.debug("Inline keyboard markup for admins created");
 
         getSendMessage().setReplyMarkup(keyboard);
